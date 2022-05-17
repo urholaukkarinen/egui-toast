@@ -1,0 +1,19 @@
+[package]
+name = "egui-toast"
+description = "Toast notifications for the egui library"
+version = "0.1.0"
+authors = ["Urho Laukkarinen <urho.laukkarinen@gmail.com>"]
+edition = "2021"
+
+license-file = "LICENSE"
+readme = "README.md"
+homepage = "https://github.com/urholaukkarinen/egui-toast"
+repository = "https://github.com/urholaukkarinen/egui-toast"
+categories = ["gui"]
+keywords = ["egui", "toast", "notification"]
+
+[dependencies]
+egui = "0.18.1"
+
+[dev-dependencies]
+eframe = { version = "0.18.0", features = ["dark-light"] }
