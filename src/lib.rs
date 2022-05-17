@@ -242,7 +242,7 @@ impl<'a> Toasts<'a> {
     ) -> &mut Self {
         ui.ctx()
             .data()
-            .get_persisted_mut_or_default::<Vec<Toast>>(self.id)
+            .get_temp_mut_or_default::<Vec<Toast>>(self.id)
             .push(Toast {
                 kind: kind.into(),
                 text: text.into(),
@@ -297,7 +297,7 @@ impl<'a> Toasts<'a> {
                             ui.spacing_mut().item_spacing = Vec2::splat(5.0);
 
                             let mut toasts: Vec<Toast> =
-                                ui.ctx().data().get_persisted(self.id).unwrap_or_default();
+                                ui.ctx().data().get_temp(self.id).unwrap_or_default();
 
                             for toast in toasts.iter_mut() {
                                 if let Some(add_contents) =
@@ -317,7 +317,7 @@ impl<'a> Toasts<'a> {
                                     .is_none()
                             });
 
-                            ui.ctx().data().insert_persisted(self.id, toasts);
+                            ui.ctx().data().insert_temp(self.id, toasts);
                         },
                     );
                 });
