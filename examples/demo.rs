@@ -43,7 +43,7 @@ impl Default for Demo {
 
 impl eframe::App for Demo {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let mut toasts = Toasts::new()
+        let mut toasts = Toasts::new(ctx)
             .anchor(self.anchor)
             .direction(self.direction)
             .align_to_end(self.align_to_end)
@@ -51,7 +51,7 @@ impl eframe::App for Demo {
 
         self.options_window(ctx, &mut toasts);
 
-        toasts.show(ctx);
+        toasts.show();
 
         ctx.request_repaint();
     }
@@ -133,16 +133,16 @@ impl Demo {
 
                     match self.kind {
                         ToastKind::Warning => {
-                            toasts.warning(ui, format!("Hello, I am a toast {}", self.i), options);
+                            toasts.warning(format!("Hello, I am a toast {}", self.i), options);
                         }
                         ToastKind::Error => {
-                            toasts.error(ui, format!("Hello, I am a toast {}", self.i), options);
+                            toasts.error(format!("Hello, I am a toast {}", self.i), options);
                         }
                         ToastKind::Success => {
-                            toasts.success(ui, format!("Hello, I am a toast {}", self.i), options);
+                            toasts.success(format!("Hello, I am a toast {}", self.i), options);
                         }
                         _ => {
-                            toasts.info(ui, format!("Hello, I am a toast {}", self.i), options);
+                            toasts.info(format!("Hello, I am a toast {}", self.i), options);
                         }
                     }
 
@@ -151,7 +151,6 @@ impl Demo {
 
                 if ui.button("Give me a custom toast").clicked() {
                     toasts.add(
-                        ui,
                         format!("Hello, I am a custom toast {}", self.i),
                         MY_CUSTOM_TOAST,
                         options,

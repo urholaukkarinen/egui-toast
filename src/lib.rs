@@ -17,22 +17,22 @@
 //! # use std::time::Duration;
 //! # use egui_toast::{Toasts, ToastKind, ToastOptions};
 //! # egui_toast::__run_test_ui(|ui, ctx| {
-//! let mut toasts = Toasts::new()
+//! let mut toasts = Toasts::new(ctx)
 //!     .anchor((300.0, 300.0))
 //!     .direction(egui::Direction::BottomUp)
 //!     .align_to_end(true);
 //!
-//! toasts.info(ui, "Hello, World!", Duration::from_secs(5));
+//! toasts.info("Hello, World!", Duration::from_secs(5));
 //! // or
-//! toasts.info(ui, "Hello, World!", ToastOptions {
+//! toasts.info("Hello, World!", ToastOptions {
 //!     show_icon: true,
 //!     ..ToastOptions::with_duration(Duration::from_secs(5))
 //! });
 //! // or
-//! toasts.add(ui, "Hello, World!", ToastKind::Info, Duration::from_secs(5));
+//! toasts.add("Hello, World!", ToastKind::Info, Duration::from_secs(5));
 //!
 //! // Show all toasts
-//! toasts.show(ctx);
+//! toasts.show();
 //! # })
 //! ```
 //!
@@ -51,14 +51,14 @@
 //!     });
 //! }
 //!
-//! let mut toasts = Toasts::new()
+//! let mut toasts = Toasts::new(ctx)
 //!     .custom_contents(MY_CUSTOM_TOAST, &custom_toast_contents)
 //!     .custom_contents(ToastKind::Info, &|ui, toast| {
 //!         ui.label(toast.text.clone());
 //!     });
 //!
 //! // Add a custom toast that never expires
-//! toasts.add(ui, "Hello, World", MY_CUSTOM_TOAST, ToastOptions::with_duration(None));
+//! toasts.add("Hello, World", MY_CUSTOM_TOAST, ToastOptions::with_duration(None));
 //!
 //! # })
 //! ```
@@ -140,6 +140,7 @@ impl Toast {
 }
 
 pub struct Toasts<'a> {
+    ctx: &'a Context,
     id: Id,
     anchor: Pos2,
     direction: Direction,
@@ -147,21 +148,16 @@ pub struct Toasts<'a> {
     custom_toast_contents: HashMap<ToastKind, &'a dyn Fn(&mut Ui, &mut Toast)>,
 }
 
-impl<'a> Default for Toasts<'a> {
-    fn default() -> Self {
+impl<'a> Toasts<'a> {
+    pub fn new(ctx: &'a Context) -> Self {
         Self {
+            ctx,
             id: Id::new("__toasts"),
             anchor: Pos2::new(0.0, 0.0),
             direction: Direction::TopDown,
             align_to_end: false,
             custom_toast_contents: HashMap::new(),
         }
-    }
-}
-
-impl<'a> Toasts<'a> {
-    pub fn new() -> Self {
-        Self::default()
     }
 
     /// Starting position for the toasts
@@ -195,52 +191,47 @@ impl<'a> Toasts<'a> {
     /// Adds a new info toast
     pub fn info(
         &mut self,
-        ui: &mut Ui,
         text: impl Into<WidgetText>,
         options: impl Into<ToastOptions>,
     ) -> &mut Self {
-        self.add(ui, text, ToastKind::Info, options)
+        self.add(text, ToastKind::Info, options)
     }
 
     /// Adds a new warning toast
     pub fn warning(
         &mut self,
-        ui: &mut Ui,
         text: impl Into<WidgetText>,
         options: impl Into<ToastOptions>,
     ) -> &mut Self {
-        self.add(ui, text, ToastKind::Warning, options)
+        self.add(text, ToastKind::Warning, options)
     }
 
     /// Adds a new error toast
     pub fn error(
         &mut self,
-        ui: &mut Ui,
         text: impl Into<WidgetText>,
         options: impl Into<ToastOptions>,
     ) -> &mut Self {
-        self.add(ui, text, ToastKind::Error, options)
+        self.add(text, ToastKind::Error, options)
     }
 
     /// Adds a new success toast
     pub fn success(
         &mut self,
-        ui: &mut Ui,
         text: impl Into<WidgetText>,
         options: impl Into<ToastOptions>,
     ) -> &mut Self {
-        self.add(ui, text, ToastKind::Success, options)
+        self.add(text, ToastKind::Success, options)
     }
 
     /// Adds a new toast
     pub fn add(
         &mut self,
-        ui: &mut Ui,
         text: impl Into<WidgetText>,
         kind: impl Into<ToastKind>,
         options: impl Into<ToastOptions>,
     ) -> &mut Self {
-        ui.ctx()
+        self.ctx
             .data()
             .get_temp_mut_or_default::<Vec<Toast>>(self.id)
             .push(Toast {
@@ -252,13 +243,13 @@ impl<'a> Toasts<'a> {
     }
 
     /// Shows and updates all toasts
-    pub fn show(mut self, ctx: &Context) {
+    pub fn show(mut self) {
         Area::new("__toasts")
             .default_pos((0.0, 0.0))
             .order(Order::Background)
             .interactable(true)
             .movable(false)
-            .show(ctx, |ui| {
+            .show(self.ctx, |ui| {
                 let now = Instant::now();
 
                 let rect = match (self.direction, self.align_to_end) {
@@ -377,7 +368,7 @@ pub fn __run_test_ui_with_toasts(mut add_contents: impl FnMut(&mut Ui, &mut Toas
     let ctx = Context::default();
     let _ = ctx.run(Default::default(), |ctx| {
         egui::CentralPanel::default().show(ctx, |ui| {
-            let mut toasts = Toasts::new();
+            let mut toasts = Toasts::new(ctx);
             add_contents(ui, &mut toasts);
         });
     });
