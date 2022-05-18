@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use eframe::egui;
 use egui::style::Margin;
-use egui::{Color32, Direction, Pos2, RichText, Widget};
+use egui::{Color32, Direction, Frame, Pos2, RichText, Widget};
 
 use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
 
@@ -162,8 +162,8 @@ impl Demo {
     }
 }
 
-fn my_custom_toast_contents(ui: &mut egui::Ui, toast: &mut Toast) {
-    egui::Frame::default()
+fn my_custom_toast_contents(ui: &mut egui::Ui, toast: &mut Toast) -> egui::Response {
+    Frame::default()
         .fill(Color32::from_rgb(33, 150, 243))
         .inner_margin(Margin::same(12.0))
         .rounding(4.0)
@@ -178,5 +178,6 @@ fn my_custom_toast_contents(ui: &mut egui::Ui, toast: &mut Toast) {
             {
                 toast.close();
             }
-        });
+        })
+        .response
 }
