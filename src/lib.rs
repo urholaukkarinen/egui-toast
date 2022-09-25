@@ -15,9 +15,9 @@
 //!
 //! ```
 //! # use std::time::Duration;
-//! # use egui_toast::{Toasts, ToastKind, ToastOptions};
+//! # use egui_toast::{Toasts, ToastKind, ToastOptions, Toast};
 //! # egui_toast::__run_test_ui(|ui, ctx| {
-//! let mut toasts = Toasts::new(ctx)
+//! let mut toasts = Toasts::new()
 //!     .anchor((300.0, 300.0))
 //!     .direction(egui::Direction::BottomUp)
 //!     .align_to_end(true);
@@ -29,10 +29,15 @@
 //!     ..ToastOptions::with_duration(Duration::from_secs(5))
 //! });
 //! // or
-//! toasts.add("Hello, World!", ToastKind::Info, Duration::from_secs(5));
+//! toasts.add(Toast {
+//!     text: "Hello, World".into(),
+//!     kind: ToastKind::Info,
+//!     options: Duration::from_secs(5).into()
+//! });
+
 //!
 //! // Show all toasts
-//! toasts.show();
+//! toasts.show(ctx);
 //! # })
 //! ```
 //!
@@ -51,14 +56,18 @@
 //!     }).response
 //! }
 //!
-//! let mut toasts = Toasts::new(ctx)
+//! let mut toasts = Toasts::new()
 //!     .custom_contents(MY_CUSTOM_TOAST, &custom_toast_contents)
-//!     .custom_contents(ToastKind::Info, &|ui, toast| {
+//!     .custom_contents(ToastKind::Info, |ui, toast| {
 //!         ui.label(toast.text.clone())
 //!     });
 //!
 //! // Add a custom toast that never expires
-//! toasts.add("Hello, World", MY_CUSTOM_TOAST, ToastOptions::with_duration(None));
+//! toasts.add(Toast {
+//!     text: "Hello, World".into(),
+//!     kind: ToastKind::Custom(MY_CUSTOM_TOAST),
+//!     options: ToastOptions::with_duration(None)
+//! });
 //!
 //! # })
 //! ```
@@ -139,24 +148,32 @@ impl Toast {
     }
 }
 
-pub struct Toasts<'a> {
-    ctx: &'a Context,
+pub type ToastContents = dyn Fn(&mut Ui, &mut Toast) -> Response;
+
+pub struct Toasts {
     id: Id,
     anchor: Pos2,
     direction: Direction,
     align_to_end: bool,
-    custom_toast_contents: HashMap<ToastKind, &'a dyn Fn(&mut Ui, &mut Toast) -> Response>,
+    custom_toast_contents: HashMap<ToastKind, Box<ToastContents>>,
+    toasts: Vec<Toast>,
 }
 
-impl<'a> Toasts<'a> {
-    pub fn new(ctx: &'a Context) -> Self {
+impl Default for Toasts {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Toasts {
+    pub fn new() -> Self {
         Self {
-            ctx,
             id: Id::new("__toasts"),
             anchor: Pos2::new(0.0, 0.0),
             direction: Direction::TopDown,
             align_to_end: false,
             custom_toast_contents: HashMap::new(),
+            toasts: Vec::new(),
         }
     }
 
@@ -182,9 +199,10 @@ impl<'a> Toasts<'a> {
     pub fn custom_contents(
         mut self,
         kind: impl Into<ToastKind>,
-        add_contents: &'a dyn Fn(&mut Ui, &mut Toast) -> Response,
+        add_contents: impl Fn(&mut Ui, &mut Toast) -> Response + 'static,
     ) -> Self {
-        self.custom_toast_contents.insert(kind.into(), add_contents);
+        self.custom_toast_contents
+            .insert(kind.into(), Box::new(add_contents));
         self
     }
 
@@ -194,7 +212,11 @@ impl<'a> Toasts<'a> {
         text: impl Into<WidgetText>,
         options: impl Into<ToastOptions>,
     ) -> &mut Self {
-        self.add(text, ToastKind::Info, options)
+        self.add(Toast {
+            text: text.into(),
+            kind: ToastKind::Info,
+            options: options.into(),
+        })
     }
 
     /// Adds a new warning toast
@@ -203,7 +225,11 @@ impl<'a> Toasts<'a> {
         text: impl Into<WidgetText>,
         options: impl Into<ToastOptions>,
     ) -> &mut Self {
-        self.add(text, ToastKind::Warning, options)
+        self.add(Toast {
+            text: text.into(),
+            kind: ToastKind::Warning,
+            options: options.into(),
+        })
     }
 
     /// Adds a new error toast
@@ -212,7 +238,11 @@ impl<'a> Toasts<'a> {
         text: impl Into<WidgetText>,
         options: impl Into<ToastOptions>,
     ) -> &mut Self {
-        self.add(text, ToastKind::Error, options)
+        self.add(Toast {
+            text: text.into(),
+            kind: ToastKind::Error,
+            options: options.into(),
+        })
     }
 
     /// Adds a new success toast
@@ -221,83 +251,74 @@ impl<'a> Toasts<'a> {
         text: impl Into<WidgetText>,
         options: impl Into<ToastOptions>,
     ) -> &mut Self {
-        self.add(text, ToastKind::Success, options)
+        self.add(Toast {
+            text: text.into(),
+            kind: ToastKind::Success,
+            options: options.into(),
+        })
     }
 
     /// Adds a new toast
-    pub fn add(
-        &mut self,
-        text: impl Into<WidgetText>,
-        kind: impl Into<ToastKind>,
-        options: impl Into<ToastOptions>,
-    ) -> &mut Self {
-        self.ctx
-            .data()
-            .get_temp_mut_or_default::<Vec<Toast>>(self.id)
-            .push(Toast {
-                kind: kind.into(),
-                text: text.into(),
-                options: options.into(),
-            });
+    pub fn add(&mut self, toast: Toast) -> &mut Self {
+        self.toasts.push(toast);
         self
     }
 
     /// Shows and updates all toasts
-    pub fn show(mut self) {
-        let screen_area = self.ctx.available_rect();
+    pub fn show(&mut self, ctx: &Context) {
+        let Self {
+            id,
+            anchor,
+            align_to_end,
+            direction,
+            ..
+        } = *self;
 
-        let area_pos: Pos2 = self
-            .ctx
-            .data()
-            .get_temp(self.id.with("pos"))
-            .unwrap_or_default();
+        let mut toasts: Vec<Toast> = ctx.data().get_temp(id).unwrap_or_default();
+        toasts.extend(std::mem::take(&mut self.toasts));
 
-        Area::new("__toasts")
+        let screen_area = ctx.available_rect();
+
+        let area_pos: Pos2 = ctx.data().get_temp(id.with("pos")).unwrap_or_default();
+
+        Area::new(id.with("area"))
             .fixed_pos(area_pos)
             .order(Order::Foreground)
             .interactable(true)
             .movable(false)
-            .show(self.ctx, |ui| {
+            .show(ctx, |ui| {
                 let now = Instant::now();
 
-                let rect = match (self.direction, self.align_to_end) {
+                let rect = match (direction, align_to_end) {
                     (Direction::LeftToRight | Direction::TopDown, false) => {
-                        Rect::from_min_size(self.anchor, screen_area.size() - self.anchor.to_vec2())
+                        Rect::from_min_size(anchor, screen_area.size() - anchor.to_vec2())
                     }
-                    (Direction::RightToLeft | Direction::BottomUp, true) => Rect::from_min_size(
-                        Pos2::new(0.0, 0.0),
-                        Vec2::new(self.anchor.x, self.anchor.y),
-                    ),
+                    (Direction::RightToLeft | Direction::BottomUp, true) => {
+                        Rect::from_min_size(Pos2::new(0.0, 0.0), Vec2::new(anchor.x, anchor.y))
+                    }
                     (Direction::BottomUp, false) | (Direction::LeftToRight, true) => {
                         Rect::from_min_size(
-                            Pos2::new(self.anchor.x, 0.0),
-                            Vec2::new(screen_area.width() - self.anchor.x, self.anchor.y),
+                            Pos2::new(anchor.x, 0.0),
+                            Vec2::new(screen_area.width() - anchor.x, anchor.y),
                         )
                     }
                     (Direction::RightToLeft, false) | (Direction::TopDown, true) => {
                         Rect::from_min_size(
-                            Pos2::new(0.0, self.anchor.y),
-                            Vec2::new(self.anchor.x, screen_area.height() - self.anchor.y),
+                            Pos2::new(0.0, anchor.y),
+                            Vec2::new(anchor.x, screen_area.height() - anchor.y),
                         )
                     }
                 };
 
-                let cross_align = if self.align_to_end {
-                    Align::Max
-                } else {
-                    Align::Min
-                };
+                let cross_align = if align_to_end { Align::Max } else { Align::Min };
 
                 let mut next_area_pos = Pos2::new(f32::MAX, f32::MAX);
 
                 ui.allocate_ui_at_rect(rect, |ui| {
                     ui.with_layout(
-                        Layout::from_main_dir_and_cross_align(self.direction, cross_align),
+                        Layout::from_main_dir_and_cross_align(direction, cross_align),
                         |ui| {
                             ui.spacing_mut().item_spacing = Vec2::splat(5.0);
-
-                            let mut toasts: Vec<Toast> =
-                                ui.ctx().data().get_temp(self.id).unwrap_or_default();
 
                             for toast in toasts.iter_mut() {
                                 let toast_response = if let Some(add_contents) =
@@ -312,12 +333,10 @@ impl<'a> Toasts<'a> {
                             }
 
                             if toasts.is_empty() {
-                                next_area_pos = self.anchor;
+                                next_area_pos = anchor;
                             }
 
-                            self.ctx
-                                .data()
-                                .insert_temp(self.id.with("pos"), next_area_pos);
+                            ctx.data().insert_temp(id.with("pos"), next_area_pos);
 
                             toasts.retain(|toast| {
                                 toast
@@ -327,7 +346,7 @@ impl<'a> Toasts<'a> {
                                     .is_none()
                             });
 
-                            ui.ctx().data().insert_temp(self.id, toasts);
+                            ctx.data().insert_temp(id, toasts);
                         },
                     );
                 });
@@ -388,7 +407,7 @@ pub fn __run_test_ui_with_toasts(mut add_contents: impl FnMut(&mut Ui, &mut Toas
     let ctx = Context::default();
     let _ = ctx.run(Default::default(), |ctx| {
         egui::CentralPanel::default().show(ctx, |ui| {
-            let mut toasts = Toasts::new(ctx);
+            let mut toasts = Toasts::new();
             add_contents(ui, &mut toasts);
         });
     });

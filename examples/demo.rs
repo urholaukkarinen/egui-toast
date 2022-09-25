@@ -43,15 +43,15 @@ impl Default for Demo {
 
 impl eframe::App for Demo {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let mut toasts = Toasts::new(ctx)
+        let mut toasts = Toasts::new()
             .anchor(self.anchor)
             .direction(self.direction)
             .align_to_end(self.align_to_end)
-            .custom_contents(MY_CUSTOM_TOAST, &my_custom_toast_contents);
+            .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents);
 
         self.options_window(ctx, &mut toasts);
 
-        toasts.show();
+        toasts.show(ctx);
 
         ctx.request_repaint();
     }
@@ -150,11 +150,11 @@ impl Demo {
                 }
 
                 if ui.button("Give me a custom toast").clicked() {
-                    toasts.add(
-                        format!("Hello, I am a custom toast {}", self.i),
-                        MY_CUSTOM_TOAST,
+                    toasts.add(Toast {
+                        text: format!("Hello, I am a custom toast {}", self.i).into(),
+                        kind: ToastKind::Custom(MY_CUSTOM_TOAST),
                         options,
-                    );
+                    });
 
                     self.i += 1;
                 }

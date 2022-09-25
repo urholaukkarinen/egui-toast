@@ -13,22 +13,29 @@ Toast notifications for the [egui](https://github.com/emilk/egui) library.
 `cargo run --example demo`
 
 ```rust
-let mut toasts = Toasts::new(ctx)
+let mut toasts = Toasts::new()
     .anchor((300.0, 300.0))
     .direction(egui::Direction::BottomUp)
     .align_to_end(true);
 
-toasts.info("Hello, World!", Duration::from_secs(5));
+if ui.button("Add toast").clicked() {
+    toasts.info("Hello, World!", Duration::from_secs(5));
+}
+
 // or
 toasts.warning("Hello, World!", ToastOptions {
     show_icon: true,
     ..ToastOptions::with_duration(Duration::from_secs(5))
 });
 // or
-toasts.add("Hello, World!", ToastKind::Error, Duration::from_secs(5));
+toasts.add(Toast {
+    text: "Hello, World!".into(),
+    kind: ToastKind::Error,
+    options: Duration::from_secs(5).into()
+});
 
 // Show all toasts
-toasts.show();
+toasts.show(ctx);
 ```
 
 ## Customization
@@ -52,12 +59,16 @@ fn my_custom_toast_contents(ui: &mut Ui, toast: &mut Toast) -> Response {
         }).response
 }
 
-let mut toasts = Toasts::new(ctx)
-    .custom_contents(MY_CUSTOM_TOAST, &my_custom_toast_contents);
+let mut toasts = Toasts::new()
+    .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents);
 
 if ui.button("Add toast").clicked() {
-    toasts.add("Hello, World!", MY_CUSTOM_TOAST, ToastOptions::default());
+    toasts.add(Toast {
+        text: "Hello, World!".into(),
+        kind: ToastKind::Custom(MY_CUSTOM_TOAST),
+        options: ToastOptions::default()
+    });
 }
 
-toasts.show();
+toasts.show(ctx);
 ```
