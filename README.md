@@ -8,33 +8,33 @@ Toast notifications for the [egui](https://github.com/emilk/egui) library.
 
 ![Toast types](toasts.png)
 
+[Try it out in a web demo](https://urholaukkarinen.github.io/egui-toast/)
+
 ## Quick start
 
-`cargo run --example demo`
+```shell
+cargo run -p egui-toast-demo
+# or in wasm
+cd demo && trunk serve
+```
+
 
 ```rust
 let mut toasts = Toasts::new()
-    .anchor((300.0, 300.0))
-    .direction(egui::Direction::BottomUp)
-    .align_to_end(true);
+    .anchor(Align2::RIGHT_BOTTOM, (-10.0, -10.0)) // 10 units from the bottom right corner
+    .direction(egui::Direction::BottomUp);
 
 if ui.button("Add toast").clicked() {
-    toasts.info("Hello, World!", Duration::from_secs(5));
+    toasts.add(Toast {
+        text: "Hello, World!".into(),
+        kind: ToastKind::Error,
+        options: ToastOptions::default()
+            .duration_in_seconds(5.0)
+            .show_progress(true)
+    });
 }
 
-// or
-toasts.warning("Hello, World!", ToastOptions {
-    show_icon: true,
-    ..ToastOptions::with_duration(Duration::from_secs(5))
-});
-// or
-toasts.add(Toast {
-    text: "Hello, World!".into(),
-    kind: ToastKind::Error,
-    options: Duration::from_secs(5).into()
-});
-
-// Show all toasts
+// Show and update all toasts
 toasts.show(ctx);
 ```
 
