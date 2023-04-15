@@ -6,9 +6,9 @@
 
 Toast notifications for the [egui](https://github.com/emilk/egui) library.
 
-![Toast types](toasts.png)
-
 [Try it out in a web demo](https://urholaukkarinen.github.io/egui-toast/)
+
+![Toast types](toasts.png)
 
 ## Quick start
 
