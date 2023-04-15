@@ -20,7 +20,10 @@
 //! toasts.add(Toast {
 //!     text: "Hello, World".into(),
 //!     kind: ToastKind::Info,
-//!     options: ToastOptions::with_duration_in_seconds(3.0)
+//!     options: ToastOptions::default()
+//!         .duration_in_seconds(3.0)
+//!         .show_progress(true)
+//!         .show_icon(true)
 //! });
 
 //!
@@ -65,8 +68,10 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
+use egui::epaint::RectShape;
 use egui::{
-    Align2, Area, Color32, Context, Direction, Id, Order, Pos2, Response, RichText, Ui, WidgetText,
+    Align2, Area, Color32, Context, Direction, Frame, Id, Order, Pos2, Response, RichText,
+    Rounding, Shape, Stroke, Ui, WidgetText,
 };
 
 pub const INFO_COLOR: Color32 = Color32::from_rgb(0, 155, 255);
@@ -98,37 +103,66 @@ pub struct Toast {
 
 #[derive(Copy, Clone)]
 pub struct ToastOptions {
-    /// This can be used to show or hide the toast type icon.
+    /// Whether the toast should include an icon.
     pub show_icon: bool,
+    /// Whether the toast should visualize the remaining time
+    pub show_progress: bool,
     /// The toast is removed when this reaches zero.
-    pub ttl_sec: f64,
+    ttl_sec: f64,
+    /// Initial value of ttl_sec, used for progress
+    initial_ttl_sec: f64,
 }
 
 impl Default for ToastOptions {
     fn default() -> Self {
         Self {
             show_icon: true,
+            show_progress: true,
             ttl_sec: f64::INFINITY,
+            initial_ttl_sec: f64::INFINITY,
         }
     }
 }
 
 impl ToastOptions {
-    pub fn with_duration(duration: impl Into<Option<Duration>>) -> Self {
-        Self {
-            ttl_sec: duration
-                .into()
-                .map_or(f64::INFINITY, |duration| duration.as_secs_f64()),
-            ..Default::default()
+    /// Set duration of the toast. [None] duration means the toast never expires.
+    pub fn duration(mut self, duration: impl Into<Option<Duration>>) -> Self {
+        self.ttl_sec = duration
+            .into()
+            .map_or(f64::INFINITY, |duration| duration.as_secs_f64());
+        self.initial_ttl_sec = self.ttl_sec;
+        self
+    }
+
+    /// Set duration of the toast in milliseconds.
+    pub fn duration_in_millis(self, millis: u64) -> Self {
+        self.duration(Duration::from_millis(millis))
+    }
+
+    /// Set duration of the toast in seconds.
+    pub fn duration_in_seconds(self, secs: f64) -> Self {
+        self.duration(Duration::from_secs_f64(secs))
+    }
+
+    /// Visualize remaining time using a progress bar.
+    pub fn show_progress(mut self, show_progress: bool) -> Self {
+        self.show_progress = show_progress;
+        self
+    }
+
+    /// Show type icon in the toast.
+    pub fn show_icon(mut self, show_icon: bool) -> Self {
+        self.show_icon = show_icon;
+        self
+    }
+
+    /// Remaining time of the toast between 1..0
+    fn progress(self) -> f64 {
+        if self.ttl_sec.is_finite() && self.initial_ttl_sec > 0.0 {
+            self.ttl_sec / self.initial_ttl_sec
+        } else {
+            0.0
         }
-    }
-
-    pub fn with_duration_in_millis(millis: u64) -> Self {
-        Self::with_duration(Duration::from_millis(millis))
-    }
-
-    pub fn with_duration_in_seconds(secs: f64) -> Self {
-        Self::with_duration(Duration::from_secs_f64(secs))
     }
 }
 
@@ -250,6 +284,10 @@ impl Toasts {
                 }
             }
 
+            if toast.options.show_progress {
+                ctx.request_repaint();
+            }
+
             match direction {
                 Direction::LeftToRight => {
                     offset.x += response.rect.width() + 10.0;
@@ -271,8 +309,11 @@ impl Toasts {
 }
 
 fn default_toast_contents(ui: &mut Ui, toast: &mut Toast) -> Response {
-    egui::Frame::window(ui.style())
-        .inner_margin(10.0)
+    let inner_margin = 10.0;
+    let frame = Frame::window(ui.style());
+    let response = frame
+        .inner_margin(inner_margin)
+        .stroke(Stroke::NONE)
         .show(ui, |ui| {
             ui.horizontal(|ui| {
                 let (icon, color) = match toast.kind {
@@ -305,9 +346,41 @@ fn default_toast_contents(ui: &mut Ui, toast: &mut Toast) -> Response {
                     b(ui, toast);
                     c(ui, toast);
                 }
-            });
+            })
         })
-        .response
+        .response;
+
+    if toast.options.show_progress {
+        progress_bar(ui, &response, toast);
+    }
+
+    // Draw the frame's stroke last
+    let frame_shape = Shape::Rect(RectShape {
+        rect: response.rect,
+        rounding: frame.rounding,
+        fill: Color32::TRANSPARENT,
+        stroke: ui.visuals().window_stroke,
+    });
+    ui.painter().add(frame_shape);
+
+    response
+}
+
+fn progress_bar(ui: &mut Ui, response: &Response, toast: &Toast) {
+    let rounding = Rounding {
+        nw: 0.0,
+        ne: 0.0,
+        ..ui.visuals().window_rounding
+    };
+    let mut clip_rect = response.rect;
+    clip_rect.set_top(clip_rect.bottom() - 2.0);
+    clip_rect.set_right(clip_rect.left() + clip_rect.width() * toast.options.progress() as f32);
+
+    ui.painter().with_clip_rect(clip_rect).rect_filled(
+        response.rect,
+        rounding,
+        ui.visuals().text_color(),
+    );
 }
 
 pub fn __run_test_ui(mut add_contents: impl FnMut(&mut Ui, &Context)) {

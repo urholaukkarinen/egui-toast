@@ -70,10 +70,7 @@ impl Default for Demo {
         demo.toasts.add(Toast {
             kind: ToastKind::Info,
             text: "Hello, I am a toast!".into(),
-            options: ToastOptions {
-                show_icon: demo.show_icon,
-                ..Default::default()
-            },
+            options: ToastOptions::default(),
         });
 
         demo
@@ -109,7 +106,7 @@ impl Demo {
         } = self;
 
         egui::Window::new("Demo options")
-            .default_pos((100.0, 100.0))
+            .default_pos((200.0, 200.0))
             .default_width(250.0)
             .show(ctx, |ui| {
                 egui::ComboBox::from_label("Anchor")
@@ -176,10 +173,10 @@ impl Demo {
                     Some(Duration::from_secs_f64(*duration_sec))
                 };
 
-                let options = ToastOptions {
-                    show_icon: *show_icon,
-                    ..ToastOptions::with_duration(duration)
-                };
+                let options = ToastOptions::default()
+                    .show_icon(*show_icon)
+                    .show_progress(true)
+                    .duration(duration);
 
                 if ui.button("Give me a toast").clicked() {
                     toasts.add(Toast {
