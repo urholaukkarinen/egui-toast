@@ -12,8 +12,11 @@ repository = "https://github.com/urholaukkarinen/egui-toast"
 categories = ["gui"]
 keywords = ["egui", "toast", "notification"]
 
+[workspace]
+members = ["demo"]
+
 [dependencies]
 egui = "0.21.0"
 
-[dev-dependencies]
-eframe = { version = "0.21.0", features = ["dark-light"] }
+[profile.release]
+opt-level = 2

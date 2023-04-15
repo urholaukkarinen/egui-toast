@@ -10,31 +10,22 @@ Toast notifications for the [egui](https://github.com/emilk/egui) library.
 
 ## Quick start
 
-`cargo run --example demo`
+`cargo run -p egui-toast-demo`
 
 ```rust
 let mut toasts = Toasts::new()
-    .anchor((300.0, 300.0))
-    .direction(egui::Direction::BottomUp)
-    .align_to_end(true);
+    .anchor(Align2::RIGHT_BOTTOM, (-10.0, -10.0)) // 10 units from the bottom right corner
+    .direction(egui::Direction::BottomUp);
 
 if ui.button("Add toast").clicked() {
-    toasts.info("Hello, World!", Duration::from_secs(5));
+    toasts.add(Toast {
+        text: "Hello, World!".into(),
+        kind: ToastKind::Error,
+        options: ToastOptions::with_duration_in_seconds(5.0)
+    });
 }
 
-// or
-toasts.warning("Hello, World!", ToastOptions {
-    show_icon: true,
-    ..ToastOptions::with_duration(Duration::from_secs(5))
-});
-// or
-toasts.add(Toast {
-    text: "Hello, World!".into(),
-    kind: ToastKind::Error,
-    options: Duration::from_secs(5).into()
-});
-
-// Show all toasts
+// Show and update all toasts
 toasts.show(ctx);
 ```
 
