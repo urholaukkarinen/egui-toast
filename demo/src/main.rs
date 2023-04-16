@@ -48,13 +48,12 @@ struct Demo {
     direction: Direction,
     kind: ToastKind,
     show_icon: bool,
-
-    toasts: Toasts,
+    show_progress: bool,
 }
 
 impl Default for Demo {
     fn default() -> Self {
-        let mut demo = Self {
+        Self {
             i: 0,
             duration_sec: 2.0,
             offset: Pos2::new(10.0, 10.0),
@@ -62,38 +61,29 @@ impl Default for Demo {
             direction: Direction::TopDown,
             kind: ToastKind::Info,
             show_icon: true,
-
-            toasts: Toasts::default(),
-        };
-
-        // Add the first toast
-        demo.toasts.add(Toast {
-            kind: ToastKind::Info,
-            text: "Hello, I am a toast!".into(),
-            options: ToastOptions::default(),
-        });
-
-        demo
+            show_progress: true,
+        }
     }
 }
 
 impl eframe::App for Demo {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        self.options_window(ctx);
-
-        // Draw and update the toasts
-        self.toasts.show(ctx);
-
         // Recreate the toasts in case the demo options have changed.
-        self.toasts = Toasts::new()
+        let mut toasts = Toasts::new()
             .anchor(self.alignment, self.offset)
             .direction(self.direction)
             .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents);
+
+        // Show the options window
+        self.options_window(ctx, &mut toasts);
+
+        // Draw and update the toasts
+        toasts.show(ctx);
     }
 }
 
 impl Demo {
-    fn options_window(&mut self, ctx: &egui::Context) {
+    fn options_window(&mut self, ctx: &egui::Context, toasts: &mut Toasts) {
         let Self {
             i,
             offset: position,
@@ -102,7 +92,7 @@ impl Demo {
             direction,
             kind,
             show_icon,
-            toasts,
+            show_progress,
         } = self;
 
         egui::Window::new("Demo options")
@@ -164,6 +154,7 @@ impl Demo {
                     });
 
                 ui.checkbox(show_icon, "Show icon");
+                ui.checkbox(show_progress, "Show progress");
 
                 ui.separator();
 
@@ -175,7 +166,7 @@ impl Demo {
 
                 let options = ToastOptions::default()
                     .show_icon(*show_icon)
-                    .show_progress(true)
+                    .show_progress(*show_progress)
                     .duration(duration);
 
                 if ui.button("Give me a toast").clicked() {
