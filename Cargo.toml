@@ -16,7 +16,7 @@ keywords = ["egui", "toast", "notification"]
 members = ["demo"]
 
 [dependencies]
-egui = "0.21.0"
+egui = "0.22.0"
 
 [profile.release]
 opt-level = 2
