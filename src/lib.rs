@@ -17,14 +17,14 @@
 //!     .anchor(Align2::LEFT_TOP, (10.0, 10.0))
 //!     .direction(egui::Direction::TopDown);
 //!
-//! toasts.add(Toast {
+//! Toast {
 //!     text: "Hello, World".into(),
 //!     kind: ToastKind::Info,
 //!     options: ToastOptions::default()
 //!         .duration_in_seconds(3.0)
 //!         .show_progress(true)
 //!         .show_icon(true)
-//! });
+//! }.push();
 
 //!
 //! // Show all toasts
@@ -54,11 +54,11 @@
 //!     });
 //!
 //! // Add a custom toast that never expires
-//! toasts.add(Toast {
+//! Toast {
 //!     text: "Hello, World".into(),
 //!     kind: ToastKind::Custom(MY_CUSTOM_TOAST),
 //!     options: ToastOptions::default(),
-//! });
+//! }.push();
 //!
 //! # })
 //! ```
@@ -84,15 +84,13 @@ pub const SUCCESS_COLOR: Color32 = Color32::from_rgb(0, 255, 32);
 
 pub type ToastContents = dyn Fn(&mut Ui, &mut Toast) -> Response;
 
+#[must_use = "Toasts do nothing, until they are showed. Call .show(...) on each egui iteration"]
 pub struct Toasts {
     id: Id,
     align: Align2,
     offset: Pos2,
     direction: Direction,
     custom_toast_contents: HashMap<ToastKind, Box<ToastContents>>,
-    /// Toasts added since the last draw call. These are moved to the
-    /// egui context's memory, so you are free to recreate the [`Toasts`] instance every frame.
-    added_toasts: Vec<Toast>,
 }
 
 impl Default for Toasts {
@@ -103,7 +101,6 @@ impl Default for Toasts {
             offset: Pos2::new(10.0, 10.0),
             direction: Direction::TopDown,
             custom_toast_contents: HashMap::new(),
-            added_toasts: Vec::new(),
         }
     }
 }
@@ -150,8 +147,9 @@ impl Toasts {
     }
 
     /// Add a new toast
+    #[deprecated = "Use Toast::push instead"]
     pub fn add(&mut self, toast: Toast) -> &mut Self {
-        self.added_toasts.push(toast);
+        toast.push();
         self
     }
 
@@ -168,7 +166,7 @@ impl Toasts {
         let dt = ctx.input(|i| i.unstable_dt) as f64;
 
         let mut toasts: Vec<Toast> = ctx.data_mut(|d| d.get_temp(id).unwrap_or_default());
-        toasts.extend(std::mem::take(&mut self.added_toasts));
+        toasts.extend(TOASTS_CHANNEL.1.try_iter());
         toasts.retain(|toast| toast.options.ttl_sec > 0.0);
 
         for (i, toast) in toasts.iter_mut().enumerate() {

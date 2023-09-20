@@ -1,5 +1,15 @@
+use crossbeam_channel::{Receiver, Sender};
 use egui::WidgetText;
+use lazy_static::lazy_static;
 use std::time::Duration;
+
+lazy_static! {
+    /// Toasts added since the last draw call. These are moved to the
+    /// egui context's memory, so you are free to recreate the [`Toasts`] instance every frame.
+    pub(crate) static ref TOASTS_CHANNEL: (Sender<Toast>, Receiver<Toast>) = {
+        crossbeam_channel::unbounded()
+    };
+}
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum ToastKind {
@@ -27,6 +37,10 @@ impl Toast {
     /// Close the toast immediately
     pub fn close(&mut self) {
         self.options.ttl_sec = 0.0;
+    }
+    /// Push this toast to global toasts queue to show it.
+    pub fn push(self) {
+        let _ = TOASTS_CHANNEL.0.send(self);
     }
 }
 

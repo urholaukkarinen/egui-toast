@@ -68,22 +68,21 @@ impl Default for Demo {
 
 impl eframe::App for Demo {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Show the options window
+        self.options_window(ctx);
+
         // Recreate the toasts in case the demo options have changed.
-        let mut toasts = Toasts::new()
+        Toasts::new()
             .anchor(self.alignment, self.offset)
             .direction(self.direction)
-            .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents);
-
-        // Show the options window
-        self.options_window(ctx, &mut toasts);
-
-        // Draw and update the toasts
-        toasts.show(ctx);
+            .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents)
+            // Draw and update the toasts
+            .show(ctx);
     }
 }
 
 impl Demo {
-    fn options_window(&mut self, ctx: &egui::Context, toasts: &mut Toasts) {
+    fn options_window(&mut self, ctx: &egui::Context) {
         let Self {
             i,
             offset: position,
@@ -170,21 +169,23 @@ impl Demo {
                     .duration(duration);
 
                 if ui.button("Give me a toast").clicked() {
-                    toasts.add(Toast {
+                    Toast {
                         kind: *kind,
                         text: format!("Hello, I am a toast {}", i).into(),
                         options,
-                    });
+                    }
+                    .push();
 
                     *i += 1;
                 }
 
                 if ui.button("Give me a custom toast").clicked() {
-                    toasts.add(Toast {
+                    Toast {
                         text: format!("Hello, I am a custom toast {}", i).into(),
                         kind: ToastKind::Custom(MY_CUSTOM_TOAST),
                         options,
-                    });
+                    }
+                    .push();
 
                     *i += 1;
                 }
