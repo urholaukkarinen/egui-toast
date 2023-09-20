@@ -53,41 +53,78 @@ impl Toast {
     }
     /// Create default error toast
     pub fn error(text: impl Into<WidgetText>) {
-        Toast::create(
-            ToastKind::Error,
-            text,
-            ToastOptions::default().show_progress(false),
-        )
+        <Toast as ToastTrait>::error(text) // repeated function from trait, so it will work even if trai is not in scope
     }
     /// Create default warning toast
     pub fn warning(text: impl Into<WidgetText>) {
-        Toast::create(
-            ToastKind::Warning,
-            text,
-            ToastOptions::default()
-                .duration_in_seconds(5.0)
-                .show_progress(true),
-        )
+        <Toast as ToastTrait>::warning(text)
     }
     /// Create default success toast
     pub fn success(text: impl Into<WidgetText>) {
-        Toast::create(
-            ToastKind::Success,
-            text,
-            ToastOptions::default()
-                .duration_in_seconds(2.0)
-                .show_progress(true),
-        )
+        <Toast as ToastTrait>::success(text)
     }
     /// Create default info toast
     pub fn info(text: impl Into<WidgetText>) {
-        Toast::create(
-            ToastKind::Info,
-            text,
-            ToastOptions::default()
-                .duration_in_seconds(2.0)
-                .show_progress(true),
-        )
+        <Toast as ToastTrait>::info(text)
+    }
+}
+impl ToastTrait for Toast {}
+
+///`ToastTrait` allows to define own toast classes with different (from `Toast`) `ToastOptions`
+/// Only associated constants are to be modified.
+/// E.g. constant WARNING represents `ToastOptions` for warning toast.
+/// Example:
+/// ```
+/// //MyToast (contrary to Toast) will display error toast for finite time (10 sec.)
+/// struct MyToast();
+/// impl ToastTrait for MyToast {
+///     const ERROR: ToastOptions = ToastOptions::new(true, true, 10.0);
+/// }
+/// ...
+/// MyToast::error("MyToast error will soon disappear");
+/// Toast::error("Toast error will stay until discarded");
+/// ```
+pub trait ToastTrait {
+    //default values, are values used for Toast
+    const WARNING: ToastOptions = ToastOptions {
+        show_icon: true,
+        show_progress: true,
+        ttl_sec: 5.0,
+        initial_ttl_sec: 5.0,
+    };
+    const ERROR: ToastOptions = ToastOptions {
+        show_icon: true,
+        show_progress: false,
+        ttl_sec: f64::INFINITY,
+        initial_ttl_sec: f64::INFINITY,
+    };
+    const INFO: ToastOptions = ToastOptions {
+        show_icon: true,
+        show_progress: true,
+        ttl_sec: 2.0,
+        initial_ttl_sec: 2.0,
+    };
+    const SUCCESS: ToastOptions = ToastOptions {
+        show_icon: true,
+        show_progress: true,
+        ttl_sec: 2.0,
+        initial_ttl_sec: 2.0,
+    };
+    /// Create default error toast
+    fn error(text: impl Into<WidgetText>) {
+        Toast::create(ToastKind::Error, text, Self::ERROR)
+    }
+    /// Create default warning toast
+    fn warning(text: impl Into<WidgetText>) {
+        Toast::create(ToastKind::Warning, text, Self::WARNING)
+    }
+    /// Create default success toast
+    fn success(text: impl Into<WidgetText>) {
+        Toast::create(ToastKind::Success, text, Self::SUCCESS)
+    }
+    /// Create default info toast
+    fn info(text: impl Into<WidgetText>) {
+        Toast::create(ToastKind::Info, text, Self::INFO)
     }
 }
 
@@ -115,6 +152,15 @@ impl Default for ToastOptions {
 }
 
 impl ToastOptions {
+    pub const fn new(show_icon: bool, show_progress: bool, time_sec: f64) -> Self {
+        Self {
+            show_icon,
+            show_progress,
+            ttl_sec: time_sec,
+            initial_ttl_sec: time_sec,
+        }
+    }
+
     /// Set duration of the toast. [None] duration means the toast never expires.
     pub fn duration(mut self, duration: impl Into<Option<Duration>>) -> Self {
         self.ttl_sec = duration

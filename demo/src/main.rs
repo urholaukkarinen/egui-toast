@@ -4,17 +4,27 @@ use eframe::egui;
 use egui::style::Margin;
 use egui::{Align2, Color32, Direction, Frame, Pos2, RichText, Widget};
 
-use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
+use egui_toast::{Toast, ToastKind, ToastOptions, ToastTrait, Toasts};
 
 /// Identifier for a custom toast kind
 const MY_CUSTOM_TOAST: u32 = 0;
+
+//You can define your own Toast types with different default ToastOptions
+//MyToast (contrary to Toast) will display error toast for finite time (10 sec.)
+struct MyToast();
+impl ToastTrait for MyToast {
+    const ERROR: ToastOptions = ToastOptions::new(true, true, 10.0);
+}
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
     //Toast can be created anywhere, but it will not be showed until `Toasts::show` call
     //Below creates simple info toast with default for info toast options (it will be shown for 2 seconds, with progressbar and info-icon)
     Toast::info("Simple toast; App has started");
-    
+
+    MyToast::error("MyToast error will soon disappear");
+    Toast::error("Toast error will stay until discarded");
+
     eframe::run_native(
         "egui-toast demo",
         eframe::NativeOptions::default(),
