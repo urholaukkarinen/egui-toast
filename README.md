@@ -20,13 +20,23 @@ cd demo && trunk serve
 
 ```rust
 if ui.button("Add toast").clicked() {
-    Toast {
-        text: "Hello, World!".into(),
-        kind: ToastKind::Warning,
-        options: ToastOptions::default()
-            .duration_in_seconds(5.0)
-            .show_progress(true)
-    }.push();
+    Toast::warning("Hello, World!");
+    //OR equivalently:
+    // Toast::create( 
+    //     "Hello, World!",
+    //     ToastKind::Warning,
+    //     ToastOptions::default()
+    //         .duration_in_seconds(5.0)
+    //         .show_progress(true)
+    // );
+    //OR equivalently:
+    // Toast {
+    //     text: "Hello, World!".into(),
+    //     kind: ToastKind::Warning,
+    //     options: ToastOptions::default()
+    //         .duration_in_seconds(5.0)
+    //         .show_progress(true)
+    // }.push();
 
 }
 Toasts::new()

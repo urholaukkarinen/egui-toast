@@ -11,6 +11,10 @@ const MY_CUSTOM_TOAST: u32 = 0;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
+    //Toast can be created anywhere, but it will not be showed until `Toasts::show` call
+    //Below creates simple info toast with default for info toast options (it will be shown for 2 seconds, with progressbar and info-icon)
+    Toast::info("Simple toast; App has started");
+    
     eframe::run_native(
         "egui-toast demo",
         eframe::NativeOptions::default(),

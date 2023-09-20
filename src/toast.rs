@@ -42,6 +42,53 @@ impl Toast {
     pub fn push(self) {
         let _ = TOASTS_CHANNEL.0.send(self);
     }
+    /// Wrapper around `Toast{...}.push()`
+    pub fn create(kind: ToastKind, text: impl Into<WidgetText>, options: ToastOptions) {
+        Toast {
+            kind: kind,
+            text: text.into(),
+            options: options,
+        }
+        .push()
+    }
+    /// Create default error toast
+    pub fn error(text: impl Into<WidgetText>) {
+        Toast::create(
+            ToastKind::Error,
+            text,
+            ToastOptions::default().show_progress(false),
+        )
+    }
+    /// Create default warning toast
+    pub fn warning(text: impl Into<WidgetText>) {
+        Toast::create(
+            ToastKind::Warning,
+            text,
+            ToastOptions::default()
+                .duration_in_seconds(5.0)
+                .show_progress(true),
+        )
+    }
+    /// Create default success toast
+    pub fn success(text: impl Into<WidgetText>) {
+        Toast::create(
+            ToastKind::Success,
+            text,
+            ToastOptions::default()
+                .duration_in_seconds(2.0)
+                .show_progress(true),
+        )
+    }
+    /// Create default info toast
+    pub fn info(text: impl Into<WidgetText>) {
+        Toast::create(
+            ToastKind::Info,
+            text,
+            ToastOptions::default()
+                .duration_in_seconds(2.0)
+                .show_progress(true),
+        )
+    }
 }
 
 #[derive(Copy, Clone)]
