@@ -18,24 +18,32 @@ cargo run -p egui-toast-demo
 cd demo && trunk serve
 ```
 
-
 ```rust
-let mut toasts = Toasts::new()
-    .anchor(Align2::RIGHT_BOTTOM, (-10.0, -10.0)) // 10 units from the bottom right corner
-    .direction(egui::Direction::BottomUp);
-
 if ui.button("Add toast").clicked() {
-    toasts.add(Toast {
-        text: "Hello, World!".into(),
-        kind: ToastKind::Error,
-        options: ToastOptions::default()
-            .duration_in_seconds(5.0)
-            .show_progress(true)
-    });
-}
+    Toast::warning("Hello, World!");
+    //OR equivalently:
+    // Toast::create( 
+    //     "Hello, World!",
+    //     ToastKind::Warning,
+    //     ToastOptions::default()
+    //         .duration_in_seconds(5.0)
+    //         .show_progress(true)
+    // );
+    //OR equivalently:
+    // Toast {
+    //     text: "Hello, World!".into(),
+    //     kind: ToastKind::Warning,
+    //     options: ToastOptions::default()
+    //         .duration_in_seconds(5.0)
+    //         .show_progress(true)
+    // }.push();
 
-// Show and update all toasts
-toasts.show(ctx);
+}
+Toasts::new()
+    .anchor(Align2::RIGHT_BOTTOM, (-10.0, -10.0)) // 10 units from the bottom right corner
+    .direction(egui::Direction::BottomUp)
+    // Show and update all toasts
+    toasts.show(ctx);
 ```
 
 ## Customization
@@ -59,16 +67,15 @@ fn my_custom_toast_contents(ui: &mut Ui, toast: &mut Toast) -> Response {
         }).response
 }
 
-let mut toasts = Toasts::new()
-    .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents);
-
 if ui.button("Add toast").clicked() {
-    toasts.add(Toast {
+    Toast {
         text: "Hello, World!".into(),
         kind: ToastKind::Custom(MY_CUSTOM_TOAST),
         options: ToastOptions::default()
-    });
+    }.push();
 }
 
-toasts.show(ctx);
+Toasts::new()
+    .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents)
+    .show(ctx);
 ```

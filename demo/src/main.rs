@@ -4,13 +4,35 @@ use eframe::egui;
 use egui::style::Margin;
 use egui::{Align2, Color32, Direction, Frame, Pos2, RichText, Widget};
 
-use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
+use egui_toast::{Toast, ToastKind, ToastOptions, ToastTrait, Toasts};
 
 /// Identifier for a custom toast kind
 const MY_CUSTOM_TOAST: u32 = 0;
 
+//You can define your own Toast types with different default ToastOptions
+//MyToast (contrary to Toast) will display error toast for finite time (10 sec.)
+struct MyToast();
+impl ToastTrait for MyToast {
+    const ERROR: ToastOptions = ToastOptions::new(true, true, 10.0);
+    const CUSTOM: &'static [(u32, ToastOptions)] =
+        &[(MY_CUSTOM_TOAST, ToastOptions::new(true, true, 3.0))];
+}
+
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
+    //Toast can be created anywhere, but it will not be showed until `Toasts::show` call
+    //Below creates simple info toast with default for info toast options (it will be shown for 2 seconds, with progressbar and info-icon)
+    Toast::info("Simple toast; App has started");
+
+    MyToast::error("MyToast error will soon disappear");
+    Toast::error("Toast error will stay until discarded");
+
+    MyToast::custom(MY_CUSTOM_TOAST, "MyToast custom stays for 3s");
+    Toast::custom(
+        MY_CUSTOM_TOAST,
+        "Toast custom stays for 5s, same as warning",
+    );
+
     eframe::run_native(
         "egui-toast demo",
         eframe::NativeOptions::default(),
@@ -68,22 +90,21 @@ impl Default for Demo {
 
 impl eframe::App for Demo {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Show the options window
+        self.options_window(ctx);
+
         // Recreate the toasts in case the demo options have changed.
-        let mut toasts = Toasts::new()
+        Toasts::new()
             .anchor(self.alignment, self.offset)
             .direction(self.direction)
-            .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents);
-
-        // Show the options window
-        self.options_window(ctx, &mut toasts);
-
-        // Draw and update the toasts
-        toasts.show(ctx);
+            .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents)
+            // Draw and update the toasts
+            .show(ctx);
     }
 }
 
 impl Demo {
-    fn options_window(&mut self, ctx: &egui::Context, toasts: &mut Toasts) {
+    fn options_window(&mut self, ctx: &egui::Context) {
         let Self {
             i,
             offset: position,
@@ -170,21 +191,23 @@ impl Demo {
                     .duration(duration);
 
                 if ui.button("Give me a toast").clicked() {
-                    toasts.add(Toast {
+                    Toast {
                         kind: *kind,
                         text: format!("Hello, I am a toast {}", i).into(),
                         options,
-                    });
+                    }
+                    .push();
 
                     *i += 1;
                 }
 
                 if ui.button("Give me a custom toast").clicked() {
-                    toasts.add(Toast {
+                    Toast {
                         text: format!("Hello, I am a custom toast {}", i).into(),
                         kind: ToastKind::Custom(MY_CUSTOM_TOAST),
                         options,
-                    });
+                    }
+                    .push();
 
                     *i += 1;
                 }
