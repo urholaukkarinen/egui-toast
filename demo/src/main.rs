@@ -14,6 +14,8 @@ const MY_CUSTOM_TOAST: u32 = 0;
 struct MyToast();
 impl ToastTrait for MyToast {
     const ERROR: ToastOptions = ToastOptions::new(true, true, 10.0);
+    const CUSTOM: &'static [(u32, ToastOptions)] =
+        &[(MY_CUSTOM_TOAST, ToastOptions::new(true, true, 3.0))];
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -24,6 +26,12 @@ fn main() -> eframe::Result<()> {
 
     MyToast::error("MyToast error will soon disappear");
     Toast::error("Toast error will stay until discarded");
+
+    MyToast::custom(MY_CUSTOM_TOAST, "MyToast custom stays for 3s");
+    Toast::custom(
+        MY_CUSTOM_TOAST,
+        "Toast custom stays for 5s, same as warning",
+    );
 
     eframe::run_native(
         "egui-toast demo",

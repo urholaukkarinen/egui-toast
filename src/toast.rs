@@ -51,21 +51,25 @@ impl Toast {
         }
         .push()
     }
-    /// Create default error toast
+    /// Create default error toast (show icon, show until canceled)
     pub fn error(text: impl Into<WidgetText>) {
         <Toast as ToastTrait>::error(text) // repeated function from trait, so it will work even if trai is not in scope
     }
-    /// Create default warning toast
+    /// Create default warning toast (show icon & progressbar, show for 5s)
     pub fn warning(text: impl Into<WidgetText>) {
         <Toast as ToastTrait>::warning(text)
     }
-    /// Create default success toast
+    /// Create default success toast (show icon & progressbar, show for 2s)
     pub fn success(text: impl Into<WidgetText>) {
         <Toast as ToastTrait>::success(text)
     }
-    /// Create default info toast
+    /// Create default info toast (show icon & progressbar, show for 2s)
     pub fn info(text: impl Into<WidgetText>) {
         <Toast as ToastTrait>::info(text)
+    }
+    /// Create default custom toast (same ToastOptions as warning)
+    pub fn custom(type_id: u32, text: impl Into<WidgetText>) {
+        <Toast as ToastTrait>::custom(type_id, text)
     }
 }
 impl ToastTrait for Toast {}
@@ -110,6 +114,10 @@ pub trait ToastTrait {
         ttl_sec: 2.0,
         initial_ttl_sec: 2.0,
     };
+    /// `CUSTOM` is colection of (toast_type_id, toast_options) that alows to set diffrent ToastOptions for each custom toast type
+    /// If `CUSTOM` does not contain entry for some toast_type_id, WARNING ToastOptions will be used.
+    const CUSTOM: &'static [(u32, ToastOptions)] = &[];
+
     /// Create default error toast
     fn error(text: impl Into<WidgetText>) {
         Toast::create(ToastKind::Error, text, Self::ERROR)
@@ -125,6 +133,17 @@ pub trait ToastTrait {
     /// Create default info toast
     fn info(text: impl Into<WidgetText>) {
         Toast::create(ToastKind::Info, text, Self::INFO)
+    }
+    /// Create default custom toast
+    fn custom(type_id: u32, text: impl Into<WidgetText>) {
+        Toast::create(
+            ToastKind::Custom(type_id),
+            text,
+            Self::CUSTOM
+                .iter()
+                .find(|(id, _)| *id == type_id)
+                .map_or(Self::WARNING, |(_, options)| options.clone()),
+        )
     }
 }
 
