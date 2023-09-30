@@ -265,12 +265,11 @@ fn default_toast_contents(ui: &mut Ui, toast: &mut Toast) -> Response {
     }
 
     // Draw the frame's stroke last
-    let frame_shape = Shape::Rect(RectShape {
-        rect: response.rect,
-        rounding: frame.rounding,
-        fill: Color32::TRANSPARENT,
-        stroke: ui.visuals().window_stroke,
-    });
+    let frame_shape = Shape::Rect(RectShape::stroke(
+        response.rect,
+        frame.rounding,
+        ui.visuals().window_stroke,
+    ));
     ui.painter().add(frame_shape);
 
     response
