@@ -83,7 +83,7 @@ pub const WARNING_COLOR: Color32 = Color32::from_rgb(255, 212, 0);
 pub const ERROR_COLOR: Color32 = Color32::from_rgb(255, 32, 0);
 pub const SUCCESS_COLOR: Color32 = Color32::from_rgb(0, 255, 32);
 
-pub type ToastContents = Arc<dyn Fn(&mut Ui, &mut Toast) -> Response>;
+pub type ToastContents = Arc<dyn Fn(&mut Ui, &mut Toast) -> Response + Send + Sync>;
 
 pub struct Toasts {
     id: Id,
@@ -143,7 +143,7 @@ impl Toasts {
     pub fn custom_contents(
         mut self,
         kind: impl Into<ToastKind>,
-        add_contents: Arc<impl Fn(&mut Ui, &mut Toast) -> Response + 'static>,
+        add_contents: Arc<impl Fn(&mut Ui, &mut Toast) -> Response + Send + Sync + 'static>,
     ) -> Self {
         self.custom_toast_contents
             .insert(kind.into(), Box::new(add_contents));
