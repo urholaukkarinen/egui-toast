@@ -37,6 +37,7 @@
 //!
 //! ```
 //! # use std::time::Duration;
+//! # use std::sync::Arc;
 //! # use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
 //! # egui_toast::__run_test_ui(|ui, ctx| {
 //! const MY_CUSTOM_TOAST: u32 = 0;
@@ -48,10 +49,7 @@
 //! }
 //!
 //! let mut toasts = Toasts::new()
-//!     .custom_contents(MY_CUSTOM_TOAST, &custom_toast_contents)
-//!     .custom_contents(ToastKind::Info, |ui, toast| {
-//!         ui.label(toast.text.clone())
-//!     });
+//!     .custom_contents(MY_CUSTOM_TOAST, custom_toast_contents);
 //!
 //! // Add a custom toast that never expires
 //! toasts.add(Toast {
@@ -83,14 +81,14 @@ pub const WARNING_COLOR: Color32 = Color32::from_rgb(255, 212, 0);
 pub const ERROR_COLOR: Color32 = Color32::from_rgb(255, 32, 0);
 pub const SUCCESS_COLOR: Color32 = Color32::from_rgb(0, 255, 32);
 
-pub type ToastContents = Arc<dyn Fn(&mut Ui, &mut Toast) -> Response + Send + Sync>;
+pub type ToastContents = dyn Fn(&mut Ui, &mut Toast) -> Response + Send + Sync;
 
 pub struct Toasts {
     id: Id,
     align: Align2,
     offset: Pos2,
     direction: Direction,
-    custom_toast_contents: HashMap<ToastKind, Box<ToastContents>>,
+    custom_toast_contents: HashMap<ToastKind, Arc<ToastContents>>,
     /// Toasts added since the last draw call. These are moved to the
     /// egui context's memory, so you are free to recreate the [`Toasts`] instance every frame.
     added_toasts: Vec<Toast>,
@@ -143,10 +141,10 @@ impl Toasts {
     pub fn custom_contents(
         mut self,
         kind: impl Into<ToastKind>,
-        add_contents: Arc<impl Fn(&mut Ui, &mut Toast) -> Response + Send + Sync + 'static>,
+        add_contents: impl Fn(&mut Ui, &mut Toast) -> Response + Send + Sync + 'static,
     ) -> Self {
         self.custom_toast_contents
-            .insert(kind.into(), Box::new(add_contents));
+            .insert(kind.into(), Arc::new(add_contents));
         self
     }
 
