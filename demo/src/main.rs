@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use std::time::Duration;
 
 use eframe::egui;
@@ -72,7 +73,7 @@ impl eframe::App for Demo {
         let mut toasts = Toasts::new()
             .anchor(self.alignment, self.offset)
             .direction(self.direction)
-            .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents);
+            .custom_contents(MY_CUSTOM_TOAST, Arc::new(my_custom_toast_contents));
 
         // Show the options window
         self.options_window(ctx, &mut toasts);
