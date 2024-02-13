@@ -6,7 +6,6 @@ authors = ["Urho Laukkarinen <urho.laukkarinen@gmail.com>"]
 edition = "2021"
 
 license = "MIT"
-license-file = "LICENSE"
 readme = "README.md"
 homepage = "https://github.com/urholaukkarinen/egui-toast"
 repository = "https://github.com/urholaukkarinen/egui-toast"
