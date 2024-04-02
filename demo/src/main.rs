@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use eframe::egui;
-use egui::style::Margin;
+use eframe::epaint::Margin;
 use egui::{Align2, Color32, Direction, Frame, Pos2, RichText, Widget};
 
 use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
