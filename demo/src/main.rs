@@ -14,7 +14,7 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "egui-toast demo",
         eframe::NativeOptions::default(),
-        Box::new(|_cc| Box::<Demo>::default()),
+        Box::new(|_cc| Ok(Box::<Demo>::default())),
     )
 }
 
@@ -138,7 +138,7 @@ impl Demo {
                     egui::DragValue::new(duration_sec)
                         .fixed_decimals(1)
                         .speed(0.1)
-                        .clamp_range(0..=100)
+                        .range(0..=100)
                         .suffix("s")
                         .ui(ui);
                     ui.label("Duration");
