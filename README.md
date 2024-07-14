@@ -30,7 +30,8 @@ if ui.button("Add toast").clicked() {
         kind: ToastKind::Error,
         options: ToastOptions::default()
             .duration_in_seconds(5.0)
-            .show_progress(true)
+            .show_progress(true),
+        ..Default::default()
     });
 }
 
@@ -41,7 +42,7 @@ toasts.show(ctx);
 ## Customization
 
 Look of the notifications can be fully customized.
-
+ 
 ```rust
 const MY_CUSTOM_TOAST: u32 = 0;
 
@@ -66,7 +67,8 @@ if ui.button("Add toast").clicked() {
     toasts.add(Toast {
         text: "Hello, World!".into(),
         kind: ToastKind::Custom(MY_CUSTOM_TOAST),
-        options: ToastOptions::default()
+        options: ToastOptions::default(),
+        ..Default::default()
     });
 }
 
