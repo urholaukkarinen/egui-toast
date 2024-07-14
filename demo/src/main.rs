@@ -4,7 +4,7 @@ use eframe::egui;
 use eframe::epaint::Margin;
 use egui::{Align2, Color32, Direction, Frame, Pos2, RichText, Widget};
 
-use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
+use egui_toast::{Toast, ToastKind, ToastOptions, ToastStyle, Toasts};
 
 /// Identifier for a custom toast kind
 const MY_CUSTOM_TOAST: u32 = 0;
@@ -169,22 +169,28 @@ impl Demo {
                     .show_progress(*show_progress)
                     .duration(duration);
 
+                let style = ToastStyle::default();
+
                 if ui.button("Give me a toast").clicked() {
-                    toasts.add(Toast {
-                        kind: *kind,
-                        text: format!("Hello, I am a toast {}", i).into(),
-                        options,
-                    });
+                    toasts.add(
+                        Toast::default()
+                            .kind(*kind)
+                            .text(format!("Hello, I am a toast {}", i))
+                            .options(options)
+                            .style(style.clone()),
+                    );
 
                     *i += 1;
                 }
 
                 if ui.button("Give me a custom toast").clicked() {
-                    toasts.add(Toast {
-                        text: format!("Hello, I am a custom toast {}", i).into(),
-                        kind: ToastKind::Custom(MY_CUSTOM_TOAST),
-                        options,
-                    });
+                    toasts.add(
+                        Toast::default()
+                            .kind(ToastKind::Custom(MY_CUSTOM_TOAST))
+                            .text(format!("Hello, I am a custom toast {}", i))
+                            .options(options)
+                            .style(style.clone()),
+                    );
 
                     *i += 1;
                 }

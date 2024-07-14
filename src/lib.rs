@@ -23,7 +23,8 @@
 //!     options: ToastOptions::default()
 //!         .duration_in_seconds(3.0)
 //!         .show_progress(true)
-//!         .show_icon(true)
+//!         .show_icon(true),
+//!     ..Default::default()
 //! });
 
 //!
@@ -56,6 +57,7 @@
 //!     text: "Hello, World".into(),
 //!     kind: ToastKind::Custom(MY_CUSTOM_TOAST),
 //!     options: ToastOptions::default(),
+//!     ..Default::default()
 //! });
 //!
 //! # })
@@ -72,14 +74,8 @@ use std::time::Duration;
 
 use egui::epaint::RectShape;
 use egui::{
-    Align2, Area, Color32, Context, Direction, Frame, Id, Order, Pos2, Response, RichText,
-    Rounding, Shape, Stroke, Ui,
+    Align2, Area, Context, Direction, Frame, Id, Order, Pos2, Response, Rounding, Shape, Stroke, Ui,
 };
-
-pub const INFO_COLOR: Color32 = Color32::from_rgb(0, 155, 255);
-pub const WARNING_COLOR: Color32 = Color32::from_rgb(255, 212, 0);
-pub const ERROR_COLOR: Color32 = Color32::from_rgb(255, 32, 0);
-pub const SUCCESS_COLOR: Color32 = Color32::from_rgb(0, 255, 32);
 
 pub type ToastContents = dyn Fn(&mut Ui, &mut Toast) -> Response + Send + Sync;
 
@@ -225,21 +221,19 @@ fn default_toast_contents(ui: &mut Ui, toast: &mut Toast) -> Response {
         .stroke(Stroke::NONE)
         .show(ui, |ui| {
             ui.horizontal(|ui| {
-                let (icon, color) = match toast.kind {
-                    ToastKind::Warning => ("⚠", WARNING_COLOR),
-                    ToastKind::Error => ("❗", ERROR_COLOR),
-                    ToastKind::Success => ("✔", SUCCESS_COLOR),
-                    _ => ("ℹ", INFO_COLOR),
-                };
-
                 let a = |ui: &mut Ui, toast: &mut Toast| {
                     if toast.options.show_icon {
-                        ui.label(RichText::new(icon).color(color));
+                        ui.label(match toast.kind {
+                            ToastKind::Warning => toast.style.warning_icon.clone(),
+                            ToastKind::Error => toast.style.error_icon.clone(),
+                            ToastKind::Success => toast.style.success_icon.clone(),
+                            _ => toast.style.info_icon.clone(),
+                        });
                     }
                 };
                 let b = |ui: &mut Ui, toast: &mut Toast| ui.label(toast.text.clone());
                 let c = |ui: &mut Ui, toast: &mut Toast| {
-                    if ui.button("🗙").clicked() {
+                    if ui.button(toast.style.close_button_text.clone()).clicked() {
                         toast.close();
                     }
                 };

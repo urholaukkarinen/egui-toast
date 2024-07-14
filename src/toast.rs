@@ -1,8 +1,9 @@
-use egui::WidgetText;
+use egui::{Color32, WidgetText};
 use std::time::Duration;
 
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(Default, Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum ToastKind {
+    #[default]
     Info,
     Warning,
     Error,
@@ -16,21 +17,67 @@ impl From<u32> for ToastKind {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Toast {
     pub kind: ToastKind,
     pub text: WidgetText,
     pub options: ToastOptions,
+    pub style: ToastStyle,
 }
 
 impl Toast {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn kind(mut self, kind: ToastKind) -> Self {
+        self.kind = kind;
+        self
+    }
+
+    pub fn text(mut self, text: impl Into<WidgetText>) -> Self {
+        self.text = text.into();
+        self
+    }
+
+    pub fn options(mut self, options: ToastOptions) -> Self {
+        self.options = options;
+        self
+    }
+
+    pub fn style(mut self, style: ToastStyle) -> Self {
+        self.style = style;
+        self
+    }
+
     /// Close the toast immediately
     pub fn close(&mut self) {
         self.options.ttl_sec = 0.0;
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
+pub struct ToastStyle {
+    pub info_icon: WidgetText,
+    pub warning_icon: WidgetText,
+    pub error_icon: WidgetText,
+    pub success_icon: WidgetText,
+    pub close_button_text: WidgetText,
+}
+
+impl Default for ToastStyle {
+    fn default() -> Self {
+        Self {
+            info_icon: WidgetText::from("ℹ").color(Color32::from_rgb(0, 155, 255)),
+            warning_icon: WidgetText::from("⚠").color(Color32::from_rgb(255, 212, 0)),
+            error_icon: WidgetText::from("❗").color(Color32::from_rgb(255, 32, 0)),
+            success_icon: WidgetText::from("✔").color(Color32::from_rgb(0, 255, 32)),
+            close_button_text: WidgetText::from("🗙"),
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
 pub struct ToastOptions {
     /// Whether the toast should include an icon.
     pub show_icon: bool,
