@@ -241,6 +241,10 @@ impl Toasts {
         toasts.retain(|toast| toast.options.ttl_sec > 0.0);
 
         for (i, toast) in toasts.iter_mut().enumerate() {
+            println!("Offset: {:?}", offset);
+            println!("Rect: {:?}", ui.available_rect_before_wrap());
+            println!("screen rect: {:?}", ui.ctx().screen_rect());
+
             let response = Area::new(id.with("toast").with(i))
                 .anchor(align, offset.to_vec2())
                 .constrain_to(ui.available_rect_before_wrap())
