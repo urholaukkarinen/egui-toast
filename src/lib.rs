@@ -240,7 +240,7 @@ impl Toasts {
         toasts.extend(std::mem::take(&mut self.added_toasts));
         toasts.retain(|toast| toast.options.ttl_sec > 0.0);
 
-        let ui_offset = ui.available_rect_before_wrap().min.to_vec2() + offset.to_vec2();
+        let ui_offset = ui.available_rect_before_wrap().max.to_vec2() + offset.to_vec2();
 
         for (i, toast) in toasts.iter_mut().enumerate() {
             let response = Area::new(id.with("toast").with(i))
