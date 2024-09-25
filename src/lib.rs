@@ -227,7 +227,7 @@ impl Toasts {
         let Self {
             id,
             align,
-            offset,
+            mut offset,
             direction,
             ..
         } = *self;
@@ -240,11 +240,11 @@ impl Toasts {
         toasts.extend(std::mem::take(&mut self.added_toasts));
         toasts.retain(|toast| toast.options.ttl_sec > 0.0);
 
-        let offset = ui.available_rect_before_wrap().max.to_vec2() + offset.to_vec2();
+        let ui_offset = ui.available_rect_before_wrap().max.to_vec2() + offset.to_vec2();
 
         for (i, toast) in toasts.iter_mut().enumerate() {
             let response = Area::new(id.with("toast").with(i))
-                .anchor(align, offset)
+                .anchor(align, ui_offset)
                 .order(Order::Foreground)
                 .interactable(true)
                 .show(ctx, |ui| {
