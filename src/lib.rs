@@ -222,6 +222,70 @@ impl Toasts {
 
         ctx.data_mut(|d| d.insert_temp(id, toasts));
     }
+
+    pub fn show_inside(&mut self, ui: &mut Ui) {
+        let Self {
+            id,
+            align,
+            mut offset,
+            direction,
+            ..
+        } = *self;
+
+        let ctx = ui.ctx();
+
+        let dt = ctx.input(|i| i.unstable_dt) as f64;
+
+        let mut toasts: Vec<Toast> = ctx.data_mut(|d| d.get_temp(id).unwrap_or_default());
+        toasts.extend(std::mem::take(&mut self.added_toasts));
+        toasts.retain(|toast| toast.options.ttl_sec > 0.0);
+
+        for (i, toast) in toasts.iter_mut().enumerate() {
+            let response = Area::new(id.with("toast").with(i))
+                .anchor(align, offset.to_vec2())
+                .order(Order::Foreground)
+                .interactable(true)
+                .constrain_to(ui.available_rect_before_wrap())
+                .show(ctx, |ui| {
+                    if let Some(add_contents) = self.custom_toast_contents.get_mut(&toast.kind) {
+                        add_contents(ui, toast)
+                    } else {
+                        default_toast_contents(ui, toast)
+                    };
+                })
+                .response;
+
+            if !response.hovered() {
+                toast.options.ttl_sec -= dt;
+                if toast.options.ttl_sec.is_finite() {
+                    ctx.request_repaint_after(Duration::from_secs_f64(
+                        toast.options.ttl_sec.max(0.0),
+                    ));
+                }
+            }
+
+            if toast.options.show_progress {
+                ctx.request_repaint();
+            }
+
+            match direction {
+                Direction::LeftToRight => {
+                    offset.x += response.rect.width() + 10.0;
+                }
+                Direction::RightToLeft => {
+                    offset.x -= response.rect.width() + 10.0;
+                }
+                Direction::TopDown => {
+                    offset.y += response.rect.height() + 10.0;
+                }
+                Direction::BottomUp => {
+                    offset.y -= response.rect.height() + 10.0;
+                }
+            }
+        }
+
+        ctx.data_mut(|d| d.insert_temp(id, toasts));
+    }
 }
 
 fn default_toast_contents(ui: &mut Ui, toast: &mut Toast) -> Response {
