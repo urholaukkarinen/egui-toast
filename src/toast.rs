@@ -19,6 +19,7 @@ impl From<u32> for ToastKind {
 
 #[derive(Clone, Default)]
 pub struct Toast {
+    name: String,
     pub kind: ToastKind,
     pub text: WidgetText,
     pub options: ToastOptions,
@@ -26,6 +27,13 @@ pub struct Toast {
 }
 
 impl Toast {
+    pub fn with_name(name: String) -> Self {
+        Self {
+            name,
+            ..Default::default()
+        }
+    }
+
     pub fn new() -> Self {
         Self::default()
     }
@@ -48,6 +56,10 @@ impl Toast {
     pub fn style(mut self, style: ToastStyle) -> Self {
         self.style = style;
         self
+    }
+
+    pub fn get_name(&self) -> &str {
+        &self.name
     }
 
     /// Close the toast immediately
