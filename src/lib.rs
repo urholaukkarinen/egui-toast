@@ -108,6 +108,17 @@ impl Toasts {
         Self::default()
     }
 
+    /// Create a new [`Toasts`] instance with a custom id
+    ///
+    /// This can be useful if you want to have multiple toast groups
+    /// in the same UI.
+    pub fn with_id(id: Id) -> Self {
+        Self {
+            id,
+            ..Default::default()
+        }
+    }
+
     /// Position where the toasts show up.
     ///
     /// The toasts will start from this position and stack up
