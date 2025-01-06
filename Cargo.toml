@@ -1,7 +1,7 @@
 [package]
 name = "egui-toast"
 description = "Toast notifications for the egui library"
-version = "0.15.0"
+version = "0.16.0"
 authors = ["Urho Laukkarinen <urho.laukkarinen@gmail.com>"]
 edition = "2021"
 
