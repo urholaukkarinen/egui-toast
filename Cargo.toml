@@ -16,4 +16,4 @@ keywords = ["egui", "toast", "notification"]
 members = ["demo"]
 
 [dependencies]
-egui = { version = "0.30", default-features = false }
+egui = { version = "0.31", default-features = false }

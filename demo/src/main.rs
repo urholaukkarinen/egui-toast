@@ -201,8 +201,8 @@ impl Demo {
 fn my_custom_toast_contents(ui: &mut egui::Ui, toast: &mut Toast) -> egui::Response {
     Frame::default()
         .fill(Color32::from_rgb(33, 150, 243))
-        .inner_margin(Margin::same(12.0))
-        .rounding(4.0)
+        .inner_margin(Margin::same(12))
+        .corner_radius(4.0)
         .show(ui, |ui| {
             ui.label(toast.text.clone().color(Color32::WHITE).monospace());
 
