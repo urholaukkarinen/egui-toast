@@ -74,7 +74,8 @@ use std::time::Duration;
 
 use egui::epaint::RectShape;
 use egui::{
-    Align2, Area, Context, Direction, Frame, Id, Order, Pos2, Response, Rounding, Shape, Stroke, Ui,
+  Align2, Area, Context, CornerRadius, Direction, Frame, Id, Order, Pos2, Response,
+  Shape, Stroke, StrokeKind, Ui,
 };
 
 pub type ToastContents = dyn Fn(&mut Ui, &mut Toast) -> Response + Send + Sync;
@@ -271,8 +272,9 @@ fn default_toast_contents(ui: &mut Ui, toast: &mut Toast) -> Response {
     // Draw the frame's stroke last
     let frame_shape = Shape::Rect(RectShape::stroke(
         response.rect,
-        frame.rounding,
+        frame.corner_radius,
         ui.visuals().window_stroke,
+        StrokeKind::Inside,
     ));
     ui.painter().add(frame_shape);
 
@@ -280,10 +282,10 @@ fn default_toast_contents(ui: &mut Ui, toast: &mut Toast) -> Response {
 }
 
 fn progress_bar(ui: &mut Ui, response: &Response, toast: &Toast) {
-    let rounding = Rounding {
-        nw: 0.0,
-        ne: 0.0,
-        ..ui.visuals().window_rounding
+    let rounding = CornerRadius {
+        nw: 0,
+        ne: 0,
+        ..ui.visuals().window_corner_radius
     };
     let mut clip_rect = response.rect;
     clip_rect.set_top(clip_rect.bottom() - 2.0);
