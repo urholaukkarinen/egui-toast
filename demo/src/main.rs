@@ -29,17 +29,18 @@ fn main() {
 
     let web_options = eframe::WebOptions::default();
 
-
     // Retrieve canvas from index.html
     // Starting from eframe 0.29:
     // * `WebRunner::start` now expects a `HtmlCanvasElement` rather than the id of it ([#4780](https://github.com/emilk/egui/pull/4780))
     fn get_canvas_element_by_id_or_die(canvas_id: &str) -> web_sys::HtmlCanvasElement {
         use wasm_bindgen::JsCast;
-        let window = web_sys::window()
-            .unwrap_or_else(|| panic!("Failed to retrieve the window instance"));
-        let document = window.document()
+        let window =
+            web_sys::window().unwrap_or_else(|| panic!("Failed to retrieve the window instance"));
+        let document = window
+            .document()
             .unwrap_or_else(|| panic!("Failed to retrieve the document instance"));
-        let canvas = document.get_element_by_id(canvas_id)
+        let canvas = document
+            .get_element_by_id(canvas_id)
             .unwrap_or_else(|| panic!("Failed to find element with id {canvas_id:?}"));
         let c = canvas.dyn_into::<web_sys::HtmlCanvasElement>().ok();
         c.unwrap_or_else(|| panic!("Failed to find canvas with id {canvas_id:?}"))
@@ -50,12 +51,12 @@ fn main() {
     wasm_bindgen_futures::spawn_local(async {
         eframe::WebRunner::new()
             .start(
-            canvas,
-            web_options,
-            Box::new(|_cc| Ok(Box::<Demo>::default())),
-        )
-        .await
-        .expect("failed to start eframe");
+                canvas,
+                web_options,
+                Box::new(|_cc| Ok(Box::<Demo>::default())),
+            )
+            .await
+            .expect("failed to start eframe");
     });
 }
 
