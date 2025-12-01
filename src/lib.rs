@@ -26,10 +26,24 @@
 //!         .show_icon(true),
 //!     ..Default::default()
 //! });
-
 //!
 //! // Show all toasts
 //! toasts.show(ctx);
+//! # })
+//! ```
+//!
+//! ## Layer Ordering
+//!
+//! By default, toasts are shown in the [`egui::Order::Foreground`] layer. To ensure toasts
+//! appear above modals or other foreground elements, you can use [`egui::Order::Tooltip`]:
+//!
+//! ```
+//! # use egui_toast::Toasts;
+//! # use egui::{Align2, Order};
+//! # egui_toast::__run_test_ui(|ui, ctx| {
+//! let mut toasts = Toasts::new()
+//!     .anchor(Align2::RIGHT_TOP, (-10.0, 10.0))
+//!     .order(Order::Tooltip); // Ensures toasts appear above modals
 //! # })
 //! ```
 //!
@@ -73,7 +87,10 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use egui::epaint::RectShape;
-use egui::{Align2, Area, Context, Direction, Frame, Id, Order, Pos2, Response, CornerRadius, Shape, Stroke, Ui, StrokeKind};
+use egui::{
+    Align2, Area, Context, CornerRadius, Direction, Frame, Id, Order, Pos2, Response, Shape,
+    Stroke, StrokeKind, Ui,
+};
 
 pub type ToastContents = dyn Fn(&mut Ui, &mut Toast) -> Response + Send + Sync;
 
@@ -82,6 +99,7 @@ pub struct Toasts {
     align: Align2,
     offset: Pos2,
     direction: Direction,
+    order: Order,
     custom_toast_contents: HashMap<ToastKind, Arc<ToastContents>>,
     /// Toasts added since the last draw call. These are moved to the
     /// egui context's memory, so you are free to recreate the [`Toasts`] instance every frame.
@@ -95,6 +113,7 @@ impl Default for Toasts {
             align: Align2::LEFT_TOP,
             offset: Pos2::new(10.0, 10.0),
             direction: Direction::TopDown,
+            order: Order::Foreground,
             custom_toast_contents: HashMap::new(),
             added_toasts: Vec::new(),
         }
@@ -115,6 +134,15 @@ impl Toasts {
             id,
             ..Default::default()
         }
+    }
+
+    /// Set the layer order for the toasts.
+    ///
+    /// Default is [`Order::Foreground`]. Use [`Order::Tooltip`] to ensure 
+    /// toasts appear above modals and other foreground elements.
+    pub fn order(mut self, order: Order) -> Self {
+        self.order = order;
+        self
     }
 
     /// Position where the toasts show up.
@@ -166,6 +194,7 @@ impl Toasts {
             align,
             mut offset,
             direction,
+            order,
             ..
         } = *self;
 
@@ -178,7 +207,7 @@ impl Toasts {
         for (i, toast) in toasts.iter_mut().enumerate() {
             let response = Area::new(id.with("toast").with(i))
                 .anchor(align, offset.to_vec2())
-                .order(Order::Foreground)
+                .order(order)
                 .interactable(true)
                 .show(ctx, |ui| {
                     if let Some(add_contents) = self.custom_toast_contents.get_mut(&toast.kind) {
@@ -271,7 +300,7 @@ fn default_toast_contents(ui: &mut Ui, toast: &mut Toast) -> Response {
         response.rect,
         frame.corner_radius,
         ui.visuals().window_stroke,
-        StrokeKind::Inside
+        StrokeKind::Inside,
     ));
     ui.painter().add(frame_shape);
 
