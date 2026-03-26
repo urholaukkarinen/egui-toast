@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use eframe::egui;
 use eframe::epaint::Margin;
-use egui::{Align2, Color32, Context, Direction, Frame, Pos2, RichText, Ui, Widget};
+use egui::{Align2, Color32, Direction, Frame, Pos2, RichText, Ui, Widget};
 use egui_toast::{Toast, ToastKind, ToastOptions, ToastStyle, Toasts};
 
 /// Identifier for a custom toast kind

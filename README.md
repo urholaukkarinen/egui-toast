@@ -36,7 +36,7 @@ if ui.button("Add toast").clicked() {
 }
 
 // Show and update all toasts
-toasts.show(ctx);
+toasts.show(ui);
 ```
 
 ## Customization
@@ -72,5 +72,5 @@ if ui.button("Add toast").clicked() {
     });
 }
 
-toasts.show(ctx);
+toasts.show(ui);
 ```

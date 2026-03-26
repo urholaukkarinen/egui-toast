@@ -12,7 +12,7 @@
 //! # use std::time::Duration;
 //! use egui::Align2;
 //! # use egui_toast::{Toasts, ToastKind, ToastOptions, Toast};
-//! # egui_toast::__run_test_ui(|ui, ctx| {
+//! # egui_toast::__run_test_ui(|ui| {
 //! let mut toasts = Toasts::new()
 //!     .anchor(Align2::LEFT_TOP, (10.0, 10.0))
 //!     .direction(egui::Direction::TopDown);
@@ -28,7 +28,7 @@
 //! });
 //!
 //! // Show all toasts
-//! toasts.show(ctx);
+//! toasts.show(ui);
 //! # })
 //! ```
 //!
@@ -40,7 +40,7 @@
 //! ```
 //! # use egui_toast::Toasts;
 //! # use egui::{Align2, Order};
-//! # egui_toast::__run_test_ui(|ui, ctx| {
+//! # egui_toast::__run_test_ui(|ui| {
 //! let mut toasts = Toasts::new()
 //!     .anchor(Align2::RIGHT_TOP, (-10.0, 10.0))
 //!     .order(Order::Tooltip); // Ensures toasts appear above modals
@@ -54,7 +54,7 @@
 //! # use std::time::Duration;
 //! # use std::sync::Arc;
 //! # use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
-//! # egui_toast::__run_test_ui(|ui, ctx| {
+//! # egui_toast::__run_test_ui(|ui| {
 //! const MY_CUSTOM_TOAST: u32 = 0;
 //!
 //! fn custom_toast_contents(ui: &mut egui::Ui, toast: &mut Toast) -> egui::Response {
@@ -324,21 +324,11 @@ fn progress_bar(ui: &mut Ui, response: &Response, toast: &Toast) {
     );
 }
 
-pub fn __run_test_ui(mut add_contents: impl FnMut(&mut Ui, &Context)) {
+pub fn __run_test_ui(mut add_contents: impl FnMut(&mut Ui)) {
     let ctx = Context::default();
-    let _ = ctx.run(Default::default(), |ctx| {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            add_contents(ui, ctx);
-        });
-    });
-}
-
-pub fn __run_test_ui_with_toasts(mut add_contents: impl FnMut(&mut Ui, &mut Toasts)) {
-    let ctx = Context::default();
-    let _ = ctx.run(Default::default(), |ctx| {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            let mut toasts = Toasts::new();
-            add_contents(ui, &mut toasts);
+    let _ = ctx.run_ui(Default::default(), |ui| {
+        egui::CentralPanel::default().show_inside(ui, |ui| {
+            add_contents(ui);
         });
     });
 }
