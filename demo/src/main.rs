@@ -1,8 +1,8 @@
 use std::time::Duration;
 
-use eframe::egui;
+use eframe::egui::{self, Sense};
 use eframe::epaint::Margin;
-use egui::{Align2, Color32, Direction, Frame, Pos2, RichText, Ui, Widget};
+use egui::{Align2, Color32, Direction, Frame, Pos2, Ui, Widget};
 use egui_toast::{Toast, ToastKind, ToastOptions, ToastStyle, Toasts};
 
 /// Identifier for a custom toast kind
@@ -114,7 +114,9 @@ impl Demo {
             show_progress,
         } = self;
 
+        let mut open = true;
         egui::Window::new("Demo options")
+            .open(&mut open)
             .default_pos((200.0, 200.0))
             .default_width(250.0)
             .show(ui, |ui| {
@@ -218,23 +220,19 @@ impl Demo {
 }
 
 fn my_custom_toast_contents(ui: &mut egui::Ui, toast: &mut Toast) -> egui::Response {
-    Frame::default()
+    let toast_response = Frame::default()
         .fill(Color32::from_rgb(33, 150, 243))
         .inner_margin(Margin::same(12))
         .corner_radius(4)
         .show(ui, |ui| {
             ui.label(toast.text.clone().color(Color32::WHITE).monospace());
-
-            if egui::Button::new(RichText::new("Close").color(Color32::WHITE))
-                .fill(Color32::from_rgb(33, 150, 243))
-                .stroke((1.0, Color32::WHITE))
-                .ui(ui)
-                .clicked()
-            {
-                toast.close();
-            }
         })
         .response
+        .on_hover_cursor(egui::CursorIcon::PointingHand);
+    if toast_response.interact(Sense::click()).clicked() {
+        toast.close();
+    }
+    toast_response
 }
 
 fn alignment_selection(ui: &mut egui::Ui, current_value: &mut Align2, alignment: Align2) {
