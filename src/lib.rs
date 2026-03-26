@@ -138,7 +138,7 @@ impl Toasts {
 
     /// Set the layer order for the toasts.
     ///
-    /// Default is [`Order::Foreground`]. Use [`Order::Tooltip`] to ensure 
+    /// Default is [`Order::Foreground`]. Use [`Order::Tooltip`] to ensure
     /// toasts appear above modals and other foreground elements.
     pub fn order(mut self, order: Order) -> Self {
         self.order = order;
@@ -188,7 +188,7 @@ impl Toasts {
     }
 
     /// Show and update all toasts
-    pub fn show(&mut self, ctx: &Context) {
+    pub fn show(&mut self, ui: &mut Ui) {
         let Self {
             id,
             align,
@@ -198,9 +198,9 @@ impl Toasts {
             ..
         } = *self;
 
-        let dt = ctx.input(|i| i.unstable_dt) as f64;
+        let dt = ui.input(|i| i.unstable_dt) as f64;
 
-        let mut toasts: Vec<Toast> = ctx.data_mut(|d| d.get_temp(id).unwrap_or_default());
+        let mut toasts: Vec<Toast> = ui.data_mut(|d| d.get_temp(id).unwrap_or_default());
         toasts.extend(std::mem::take(&mut self.added_toasts));
         toasts.retain(|toast| toast.options.ttl_sec > 0.0);
 
@@ -209,7 +209,7 @@ impl Toasts {
                 .anchor(align, offset.to_vec2())
                 .order(order)
                 .interactable(true)
-                .show(ctx, |ui| {
+                .show(ui, |ui| {
                     if let Some(add_contents) = self.custom_toast_contents.get_mut(&toast.kind) {
                         add_contents(ui, toast)
                     } else {
@@ -221,14 +221,14 @@ impl Toasts {
             if !response.hovered() {
                 toast.options.ttl_sec -= dt;
                 if toast.options.ttl_sec.is_finite() {
-                    ctx.request_repaint_after(Duration::from_secs_f64(
+                    ui.request_repaint_after(Duration::from_secs_f64(
                         toast.options.ttl_sec.max(0.0),
                     ));
                 }
             }
 
             if toast.options.show_progress {
-                ctx.request_repaint();
+                ui.request_repaint();
             }
 
             match direction {
@@ -247,7 +247,7 @@ impl Toasts {
             }
         }
 
-        ctx.data_mut(|d| d.insert_temp(id, toasts));
+        ui.data_mut(|d| d.insert_temp(id, toasts));
     }
 }
 

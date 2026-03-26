@@ -2,8 +2,7 @@ use std::time::Duration;
 
 use eframe::egui;
 use eframe::epaint::Margin;
-use egui::{Align2, Color32, Direction, Frame, Pos2, RichText, Widget};
-
+use egui::{Align2, Color32, Context, Direction, Frame, Pos2, RichText, Ui, Widget};
 use egui_toast::{Toast, ToastKind, ToastOptions, ToastStyle, Toasts};
 
 /// Identifier for a custom toast kind
@@ -87,7 +86,7 @@ impl Default for Demo {
 }
 
 impl eframe::App for Demo {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
         // Recreate the toasts in case the demo options have changed.
         let mut toasts = Toasts::new()
             .anchor(self.alignment, self.offset)
@@ -95,15 +94,15 @@ impl eframe::App for Demo {
             .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents);
 
         // Show the options window
-        self.options_window(ctx, &mut toasts);
+        self.options_window(ui, &mut toasts);
 
         // Draw and update the toasts
-        toasts.show(ctx);
+        toasts.show(ui);
     }
 }
 
 impl Demo {
-    fn options_window(&mut self, ctx: &egui::Context, toasts: &mut Toasts) {
+    fn options_window(&mut self, ui: &mut Ui, toasts: &mut Toasts) {
         let Self {
             i,
             offset: position,
@@ -118,7 +117,7 @@ impl Demo {
         egui::Window::new("Demo options")
             .default_pos((200.0, 200.0))
             .default_width(250.0)
-            .show(ctx, |ui| {
+            .show(ui, |ui| {
                 egui::ComboBox::from_label("Anchor")
                     .selected_text(align2_to_str(*alignment))
                     .show_ui(ui, |ui| {
