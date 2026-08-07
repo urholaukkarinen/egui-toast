@@ -314,9 +314,12 @@ fn progress_bar(ui: &mut Ui, response: &Response, toast: &Toast) {
 
 pub fn __run_test_ui(mut add_contents: impl FnMut(&mut Ui)) {
     let ctx = Context::default();
-    let _ = ctx.run_ui(Default::default(), |ui| {
+    let mut output = ctx.run_ui(Default::default(), |ui| {
         egui::CentralPanel::default().show(ui, |ui| {
             add_contents(ui);
         });
     });
+
+    // Prevent panic in debug mode with unused texture deltas
+    output.textures_delta.clear();
 }
