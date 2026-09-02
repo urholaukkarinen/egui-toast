@@ -98,6 +98,7 @@ pub struct Toasts {
     align: Align2,
     offset: Pos2,
     direction: Direction,
+    pause_all_on_hover: bool,
     order: Order,
     custom_toast_contents: HashMap<ToastKind, Arc<ToastContents>>,
     /// Toasts added since the last draw call. These are moved to the
@@ -112,6 +113,7 @@ impl Default for Toasts {
             align: Align2::LEFT_TOP,
             offset: Pos2::new(10.0, 10.0),
             direction: Direction::TopDown,
+            pause_all_on_hover: false,
             order: Order::Foreground,
             custom_toast_contents: HashMap::new(),
             added_toasts: Vec::new(),
@@ -133,6 +135,14 @@ impl Toasts {
             id,
             ..Default::default()
         }
+    }
+
+    /// Set whether all toasts should pause if any is hovered.
+    ///
+    /// Default is `false`.
+    pub fn pause_all_on_hover(mut self, value: bool) -> Self {
+        self.pause_all_on_hover = value;
+        self
     }
 
     /// Set the layer order for the toasts.
@@ -193,15 +203,22 @@ impl Toasts {
             align,
             mut offset,
             direction,
+            pause_all_on_hover,
             order,
             ..
         } = *self;
 
         let dt = ui.input(|i| i.unstable_dt) as f64;
 
-        let mut toasts: Vec<Toast> = ui.data_mut(|d| d.get_temp(id).unwrap_or_default());
+        let (mut toasts, prev_is_any_hovered): (Vec<Toast>, bool) =
+            ui.data_mut(|d| d.get_temp(id).unwrap_or_default());
         toasts.append(&mut self.added_toasts);
         toasts.retain(|toast| toast.options.ttl_sec > 0.0);
+
+        // Don't mutate `prev_is_any_hovered` and instead delay it one frame. If
+        // we didn't delay it, the first N-1 toasts would still update their
+        // progress on the first frame of toast # N being hovered.
+        let mut next_is_any_hovered = false;
 
         for (i, toast) in toasts.iter_mut().enumerate() {
             let response = Area::new(id.with("toast").with(i))
@@ -217,7 +234,9 @@ impl Toasts {
                 })
                 .inner;
 
-            if !response.contains_pointer() {
+            if response.contains_pointer() {
+                next_is_any_hovered = true;
+            } else if !(pause_all_on_hover && prev_is_any_hovered) {
                 toast.options.ttl_sec -= dt;
                 if toast.options.ttl_sec.is_finite() {
                     ui.request_repaint_after(Duration::from_secs_f64(
@@ -246,7 +265,7 @@ impl Toasts {
             }
         }
 
-        ui.data_mut(|d| d.insert_temp(id, toasts));
+        ui.data_mut(|d| d.insert_temp(id, (toasts, next_is_any_hovered)));
     }
 }
 
@@ -260,12 +279,15 @@ fn default_toast_contents(ui: &mut Ui, toast: &mut Toast) -> Response {
             ui.horizontal(|ui| {
                 let a = |ui: &mut Ui, toast: &mut Toast| {
                     if toast.options.show_icon {
-                        ui.label(match toast.kind {
-                            ToastKind::Warning => toast.style.warning_icon.clone(),
-                            ToastKind::Error => toast.style.error_icon.clone(),
-                            ToastKind::Success => toast.style.success_icon.clone(),
-                            _ => toast.style.info_icon.clone(),
-                        });
+                        ui.add(
+                            egui::Label::new(match toast.kind {
+                                ToastKind::Warning => toast.style.warning_icon.clone(),
+                                ToastKind::Error => toast.style.error_icon.clone(),
+                                ToastKind::Success => toast.style.success_icon.clone(),
+                                _ => toast.style.info_icon.clone(),
+                            })
+                            .selectable(false),
+                        );
                     }
                 };
                 let b = |ui: &mut Ui, toast: &mut Toast| ui.label(toast.text.clone());
