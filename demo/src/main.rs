@@ -68,6 +68,7 @@ struct Demo {
     kind: ToastKind,
     show_icon: bool,
     show_progress: bool,
+    pause_all_on_hover: bool,
 }
 
 impl Default for Demo {
@@ -81,6 +82,7 @@ impl Default for Demo {
             kind: ToastKind::Info,
             show_icon: true,
             show_progress: true,
+            pause_all_on_hover: false,
         }
     }
 }
@@ -91,6 +93,7 @@ impl eframe::App for Demo {
         let mut toasts = Toasts::new()
             .anchor(self.alignment, self.offset)
             .direction(self.direction)
+            .pause_all_on_hover(self.pause_all_on_hover)
             .custom_contents(MY_CUSTOM_TOAST, my_custom_toast_contents);
 
         // Show the options window
@@ -112,6 +115,7 @@ impl Demo {
             kind,
             show_icon,
             show_progress,
+            pause_all_on_hover,
         } = self;
 
         let mut open = true;
@@ -176,6 +180,10 @@ impl Demo {
 
                 ui.checkbox(show_icon, "Show icon");
                 ui.checkbox(show_progress, "Show progress");
+
+                ui.separator();
+
+                ui.checkbox(pause_all_on_hover, "Pause all toasts on any hover");
 
                 ui.separator();
 
