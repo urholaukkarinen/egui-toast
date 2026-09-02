@@ -279,12 +279,15 @@ fn default_toast_contents(ui: &mut Ui, toast: &mut Toast) -> Response {
             ui.horizontal(|ui| {
                 let a = |ui: &mut Ui, toast: &mut Toast| {
                     if toast.options.show_icon {
-                        ui.label(match toast.kind {
-                            ToastKind::Warning => toast.style.warning_icon.clone(),
-                            ToastKind::Error => toast.style.error_icon.clone(),
-                            ToastKind::Success => toast.style.success_icon.clone(),
-                            _ => toast.style.info_icon.clone(),
-                        });
+                        ui.add(
+                            egui::Label::new(match toast.kind {
+                                ToastKind::Warning => toast.style.warning_icon.clone(),
+                                ToastKind::Error => toast.style.error_icon.clone(),
+                                ToastKind::Success => toast.style.success_icon.clone(),
+                                _ => toast.style.info_icon.clone(),
+                            })
+                            .selectable(false),
+                        );
                     }
                 };
                 let b = |ui: &mut Ui, toast: &mut Toast| ui.label(toast.text.clone());
