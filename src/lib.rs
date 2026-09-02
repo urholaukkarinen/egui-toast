@@ -200,7 +200,7 @@ impl Toasts {
         let dt = ui.input(|i| i.unstable_dt) as f64;
 
         let mut toasts: Vec<Toast> = ui.data_mut(|d| d.get_temp(id).unwrap_or_default());
-        toasts.extend(std::mem::take(&mut self.added_toasts));
+        toasts.append(&mut self.added_toasts);
         toasts.retain(|toast| toast.options.ttl_sec > 0.0);
 
         for (i, toast) in toasts.iter_mut().enumerate() {
@@ -213,11 +213,11 @@ impl Toasts {
                         add_contents(ui, toast)
                     } else {
                         default_toast_contents(ui, toast)
-                    };
+                    }
                 })
-                .response;
+                .inner;
 
-            if !response.hovered() {
+            if !response.contains_pointer() {
                 toast.options.ttl_sec -= dt;
                 if toast.options.ttl_sec.is_finite() {
                     ui.request_repaint_after(Duration::from_secs_f64(
