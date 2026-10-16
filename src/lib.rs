@@ -109,7 +109,7 @@ pub struct Toasts {
 impl Default for Toasts {
     fn default() -> Self {
         Self {
-            id: Id::new("__toasts"),
+            id: Id::unique("__toasts"),
             align: Align2::LEFT_TOP,
             offset: Pos2::new(10.0, 10.0),
             direction: Direction::TopDown,
